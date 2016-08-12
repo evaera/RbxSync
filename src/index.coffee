@@ -1,10 +1,11 @@
-{app, BrowserWindow, Tray, Menu, shell, dialog} =
+{app, BrowserWindow, Tray, Menu, MenuItem, shell, dialog} =
 	require 'electron'
 
 fs 				= require 'fs'
 path 			= require 'path'
 portastic		= require 'portastic'
 mkdirp			= require 'mkdirp'
+request			= require 'request'
 
 httpServer 		= require './server'
 
@@ -24,6 +25,31 @@ copyPlugin = ->
 
 	fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.min.lua"))
 	fs.writeFileSync path.join(filepath, "VERSION"), BUILD
+
+checkForUpdate = (menu) ->
+	request.get "https://raw.githubusercontent.com/evaera/RSync/master/src/config.json", (err, res, body) ->
+		return if err
+
+		try
+			data = JSON.parse body
+		catch
+			return
+
+		return unless data.BUILD
+
+		return unless typeof data.BUILD is "number"
+
+		if data.BUILD > BUILD
+			menu.insert 0, new MenuItem({type: "separator"})
+			menu.insert 0, new MenuItem({
+				label: "Download New Update...",
+				click: ->
+					shell.openExternal "https://github.com/evaera/RSync/releases"
+			})
+
+			tray.displayBalloon 
+				title: "A new update for RSync is available."
+				content: "Right-click on the tray icon to download the new update."
 
 app.on 'ready', ->
 	portastic.test PORT, (open) ->
@@ -51,8 +77,8 @@ app.on 'ready', ->
 		}
 		{
 			label: "About RSync..."
-			click: (item) ->
-				shell.openExternal "https://eryn.io/rsync"
+			click: ->
+				shell.openExternal "https://github.com/evaera/RSync"
 		}
 		{
 			type: "separator"
@@ -64,3 +90,5 @@ app.on 'ready', ->
 		}
 	]
 	tray.setContextMenu menu
+
+	checkForUpdate menu
