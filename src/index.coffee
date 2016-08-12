@@ -21,10 +21,9 @@ quitApp = ->
 copyPlugin = ->
 	filepath = path.join(app.getPath("appData"), "..", "Local", "Roblox", "Plugins", "RSync")
 
-	mkdirp filepath
-
-	fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.min.lua"))
-	fs.writeFileSync path.join(filepath, "VERSION"), BUILD
+	mkdirp filepath, ->
+		fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.min.lua"))
+		fs.writeFileSync path.join(filepath, "VERSION"), BUILD
 
 checkForUpdate = (menu) ->
 	request.get "https://raw.githubusercontent.com/evaera/RSync/master/src/config.json", (err, res, body) ->
