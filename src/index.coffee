@@ -1,6 +1,6 @@
 {app, BrowserWindow, Tray, Menu, MenuItem, shell, dialog} =
 	require 'electron'
-
+ 
 fs 				= require 'fs'
 path 			= require 'path'
 portastic		= require 'portastic'
