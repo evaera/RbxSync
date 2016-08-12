@@ -1,3 +1,6 @@
+setlocal
+cd /d %~dp0
+
 @echo off
 
 set file="plugin.min.lua"
