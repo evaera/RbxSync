@@ -18,6 +18,7 @@ The ROBLOX Studio plugin must be built before RSync will work, **even for develo
 
 ### Prerequisites 
 - `npm install -g luamin`
+- `npm install -g electron-packager`
 - You must have [`moonc`](http://moonscript.org/) in your PATH.
 
 ### Building the Plugin
