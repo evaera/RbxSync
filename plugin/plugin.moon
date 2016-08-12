@@ -1,5 +1,5 @@
-BUILD 	= 1
-PORT 	= 21496
+BUILD=1
+PORT=21496
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache
 
