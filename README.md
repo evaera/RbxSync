@@ -12,3 +12,17 @@ RSync is designed with simplicity in mind: just download the executable and run 
 RSync is designed to work on Windows only.
 
 **Note**: If you already have Studio open when you run the application for the first time, you will need to restart Studio for the plugin to load.
+
+## Building it yourself
+The ROBLOX Studio plugin must be built before RSync will work, **even for development**. The build script will automatically copy the information from `/src/config.json` into *plugin.moon*, so that it always stays up to date with the config info.
+
+### Prerequisites 
+- `npm install -g luamin`
+- You must have [`moonc`](http://moonscript.org/) in your PATH.
+
+### Building the Plugin
+Either run *build.bat* manually or use `cake build` if you have CoffeeScript installed. 
+**Don't** run *buildc.bat* manually.
+
+### Building the entire app
+Same requirements as above, but this time just run *package.bat*. 
