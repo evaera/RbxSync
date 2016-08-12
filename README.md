@@ -20,16 +20,15 @@ RSync is designed to work on Windows only.
 The ROBLOX Studio plugin must be built before RSync will work, **even for development**. The build script will automatically copy the information from `/src/config.json` into *plugin.moon*, so that it always stays up to date with the config info.
 
 ### Prerequisites 
-- `npm install -g luamin`
 - `npm install -g electron-packager`
+- `npm install -g coffee-script`
 - You must have [`moonc`](http://moonscript.org/) in your PATH.
 
 ### Building the Plugin
-Either run *build.bat* manually or use `cake build` if you have CoffeeScript installed. 
-**Don't** run *buildc.bat* manually.
+Run `cake build:plugin`
 
 ### Building the entire app
-Same requirements as above, but this time just run *package.bat*. 
+Run `cake build:app`
 
 ## Ideas / Coming Soon
 - Moonscript support for game scripts

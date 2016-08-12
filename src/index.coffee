@@ -22,7 +22,7 @@ copyPlugin = ->
 	filepath = path.join(app.getPath("appData"), "..", "Local", "Roblox", "Plugins", "RSync")
 
 	mkdirp filepath, ->
-		fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.min.lua"))
+		fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.lua"))
 		fs.writeFileSync path.join(filepath, "VERSION"), BUILD
 
 checkForUpdate = (menu) ->

@@ -1,5 +1,7 @@
+-- BEGIN AUTO CONFIG --
 BUILD=2
 PORT=21496
+-- END AUTO CONFIG
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache
 
