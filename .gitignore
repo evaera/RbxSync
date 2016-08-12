@@ -54,3 +54,4 @@ node_modules/
 *.sublime-workspace
 plugin/plugin.lua
 plugin/plugin.min.lua
+src/plugin.min.lua
