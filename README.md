@@ -9,6 +9,8 @@ Available in the [releases section.](https://github.com/evaera/RSync/releases)
 ## Installation 
 RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. 
 
+Files will open with your system default `.lua` editor.
+
 RSync is designed to work on Windows only.
 
 **Note**: If you already have Studio open when you run the application for the first time, you will need to restart Studio for the plugin to load.
