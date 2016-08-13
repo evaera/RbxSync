@@ -16,7 +16,7 @@ temp 		= true
 polling		= false
 failed		= 0
 
-mixinRequire = "local __RSMIXINS=require(game.ServerScriptService.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
+mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('(%w+)', script, getfenv%(%)%)"
 
@@ -44,8 +44,8 @@ alert = (...) ->
 			alertBox.Visible = false
 
 parseMixinsOut = (source) ->
-	return source unless game.ServerScriptService\FindFirstChild("Mixins") and 
-		game.ServerScriptService.Mixins\IsA("ModuleScript")
+	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
+		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
 		source = source\sub(#mixinRequire + 1)
@@ -55,8 +55,8 @@ parseMixinsOut = (source) ->
 	return source
 
 parseMixinsIn = (source) ->
-	return source unless game.ServerScriptService\FindFirstChild("Mixins") and 
-		game.ServerScriptService.Mixins\IsA("ModuleScript")
+	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
+		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\find "@%((%w+)%)"
 		source = mixinRequire .. source
