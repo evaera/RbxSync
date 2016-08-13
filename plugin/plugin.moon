@@ -3,7 +3,7 @@ BUILD=3
 PORT=21496
 -- END AUTO CONFIG
 
-local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper, getPartials
+local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper, parseMixinsOut, parseMixinsIn, deleteScript
 
 uis 	= game\GetService "UserInputService"
 http 	= game\GetService "HttpService"
@@ -12,6 +12,7 @@ cgui 	= game\GetService "CoreGui"
 scriptCache = {}
 sourceCache = {}
 gameGUID 	= http\GenerateGUID!
+temp 		= true
 polling		= false
 failed		= 0
 
@@ -43,7 +44,7 @@ alert = (...) ->
 			alertBox.Visible = false
 
 parseMixinsOut = (source) ->
-	return {} unless game.ServerScriptService\FindFirstChild("Mixins") and 
+	return source unless game.ServerScriptService\FindFirstChild("Mixins") and 
 		game.ServerScriptService.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
@@ -54,7 +55,7 @@ parseMixinsOut = (source) ->
 	return source
 
 parseMixinsIn = (source) ->
-	return {} unless game.ServerScriptService\FindFirstChild("Mixins") and 
+	return source unless game.ServerScriptService\FindFirstChild("Mixins") and 
 		game.ServerScriptService.Mixins\IsA("ModuleScript")
 
 	if source\find "@%((%w+)%)"
@@ -66,13 +67,32 @@ parseMixinsIn = (source) ->
 
 hookChanges = (obj) ->
 	obj.Changed\connect (prop) ->
-		if prop == "Source"
-			if sourceCache[obj] == obj.Source
-				sourceCache[obj] = nil
-			else
-				sendScript obj, false
+		switch prop
+			when "Source"
+				if sourceCache[obj] == obj.Source
+					sourceCache[obj] = nil
+				else
+					sendScript obj, false
+			when "Parent", "Name"
+				deleteScript obj
+
+
+deleteScript = (obj) ->
+	return unless scriptCache[obj]
+
+	data =
+		guid: scriptCache[obj]
+
+	scriptCache[scriptCache[obj]] = nil
+	scriptCache[obj] = nil
+
+	pcall ->
+		http\PostAsync "http://localhost:#{PORT}/delete", http\JSONEncode(data), "ApplicationJson", false
+		sendScript obj, false
 
 sendScript = (obj, open=true) ->
+	return unless obj.Parent
+	
 	stack = {}
 	parent = obj.Parent
 	while parent != game
@@ -100,6 +120,7 @@ sendScript = (obj, open=true) ->
 		:path
 		:syntax
 		:source
+		:temp
 		name: obj.Name
 		class: obj.ClassName
 		place_name: gameGUID
@@ -147,13 +168,13 @@ startPoll = ->
 				alert "Lost connection to the helper client, stopping."
 				break
 
-init = ->
+init = (cb) ->
 	success, err = pcall ->
-		data = http\JSONDecode http\GetAsync("http://localhost:#{PORT}/", true)
+		data = http\JSONDecode http\PostAsync("http://localhost:#{PORT}/new", http\JSONEncode(place_name: gameGUID), "ApplicationJson", false)
 		if data.status == "OK"
 			if data.build == BUILD
 				startPoll!
-				doSelection!
+				cb!
 			else
 				alert "Plugin version does not match helper version, restart studio."
 		else
@@ -169,8 +190,34 @@ init = ->
 			alert "Unhandled error, please check output."
 			debug "An error occurred: #{err}"
 
+scan = ->
+	return init scan unless polling
+
+	lookIn = (obj) ->
+		for child in *obj\GetChildren!
+			if child\IsA "LuaSourceContainer"
+				sendScript child, false
+			lookIn child
+
+	lookIn game.Workspace
+	lookIn game.Lighting
+	lookIn game.ReplicatedFirst
+	lookIn game.ReplicatedStorage
+	lookIn game.ServerScriptService
+	lookIn game.ServerStorage
+	lookIn game.StarterGui
+	lookIn game.StarterPack
+	lookIn game.StarterPlayer
+
+	game.DescendantAdded\connect (obj) ->
+		if obj\IsA "LuaSourceContainer"
+			sendScript obj, false
+
+	alert "All game scripts updated on filesystem, path in output"
+	debug "Documents\\ROBLOX\\RSync\\#{gameGUID}\\"
+
 doSelection = ->
-	return init! unless polling
+	return init doSelection unless polling
 
 	selection = game.Selection\Get!
 
@@ -227,3 +274,8 @@ uis.InputBegan\connect (input, gpe) ->
 				checkMoonHelper obj, true
 		
 		doSelection!
+
+if http\FindFirstChild("PlaceName") and http.PlaceName\IsA("StringValue") and #http.PlaceName.Value > 0
+	gameGUID = http.PlaceName.Value
+	temp = false
+	scan!

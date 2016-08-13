@@ -11,9 +11,11 @@ mkdirp			= require 'mkdirp'
 {BUILD, VERSION} = 
 	require './config.json'
 
-commands = []
-lprequest = null
-fileCache = {}
+commands 	= []
+lprequest 	= null
+fileCache 	= {}
+watchers 	= {}
+guidCache	= {}
 
 addCommand = (type, data) ->
 	commands.push {type: type, data: data}
@@ -21,10 +23,25 @@ addCommand = (type, data) ->
 		lprequest.json(commands.shift())
 		lprequest = null
 
+deleteFile = (guid, fileToo) ->
+	if fileCache[guid]?
+		fs.unlinkSync fileCache[guid] if fileToo
+		watchers[fileCache[guid]].close() if watchers[fileCache[guid]]?
+		delete fileCache[fileCache[guid]]
+		delete fileCache[guid]
+
 server = express()
 server.use bodyParser.json()
 
-server.get "/", (req, res) ->
+server.post "/new", (req, res) ->
+	data = req.body
+
+	if guidCache[data.place_name]?
+		for guid in guidCache[data.place_name]
+			deleteFile guid, false
+
+	guidCache[data.place_name] = []
+
 	res.json 
 		status: "OK"
 		app: "RSync"
@@ -43,6 +60,12 @@ server.get "/poll", (req, res) ->
 				res.json({})
 		, 50000
 
+server.post "/delete", (req, res) ->
+	data = req.body
+
+	deleteFile data.guid, true
+
+	res.send "OK"
 
 server.post "/write/:action", (req, res) ->
 	if req.params.action? and req.params.action is "open"
@@ -68,9 +91,14 @@ server.post "/write/:action", (req, res) ->
 		else
 			fext = ".rbxs"
 
-	filename 	= "#{data.name}#{ext}#{fext}"
-	filepath 	= path.join(app.getPath("temp"), "RSync", data.place_name, data.path)
-	file 		= path.join(filepath, filename)
+	filename = "#{data.name}#{ext}#{fext}"
+
+	if data.temp
+		filepath = path.join(app.getPath("temp"), "RSync", data.place_name, data.path)
+	else
+		filepath = path.join(app.getPath("documents"), "ROBLOX", "RSync", data.place_name, data.path)
+
+	file = path.join(filepath, filename)
 
 	unless fileCache[file] is data.guid
 		while fileCache[file]
@@ -86,11 +114,13 @@ server.post "/write/:action", (req, res) ->
 			if fileCache[file] is data.guid
 				break
 
+	guidCache[data.place_name].push data.guid
+
 	mkdirp filepath, ->
 		fs.writeFileSync file, data.source
 
 		unless fileCache[file]
-			fs.watch file, (type) ->
+			watchers[file] = fs.watch file, (type) ->
 				if type is "change"
 					switch data.syntax
 						when "lua"
@@ -114,8 +144,11 @@ server.post "/write/:action", (req, res) ->
 											encoding: 'utf8'
 										moon: fs.readFileSync file, 
 											encoding: 'utf8'
+									try
+										fs.unlinkSync path.join(filepath, "#{data.name}#{ext}.lua")
 
-		fileCache[file] = data.guid
+		fileCache[file] 		= data.guid
+		fileCache[data.guid]	= file
 		shell.openItem file if openAfter
 
 	res.send "OK"
