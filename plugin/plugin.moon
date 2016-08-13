@@ -1,9 +1,9 @@
 -- BEGIN AUTO CONFIG --
-BUILD=2
+BUILD=3
 PORT=21496
 -- END AUTO CONFIG
 
-local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache
+local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper, getPartials
 
 uis 	= game\GetService "UserInputService"
 http 	= game\GetService "HttpService"
@@ -14,6 +14,10 @@ sourceCache = {}
 gameGUID 	= http\GenerateGUID!
 polling		= false
 failed		= 0
+
+mixinRequire = "local __RSMIXINS=require(game.ServerScriptService.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
+mixinString = "__RSMIXIN('%1', script, getfenv())"
+mixinStringPattern = "__RSMIXIN%('(%w+)', script, getfenv%(%)%)"
 
 debug = (...) ->
 	print "[RSync build #{BUILD}] ", ...
@@ -37,6 +41,28 @@ alert = (...) ->
 		wait 5
 		if snapshot == alertActive
 			alertBox.Visible = false
+
+parseMixinsOut = (source) ->
+	return {} unless game.ServerScriptService\FindFirstChild("Mixins") and 
+		game.ServerScriptService.Mixins\IsA("ModuleScript")
+
+	if source\sub(1, #mixinRequire) == mixinRequire
+		source = source\sub(#mixinRequire + 1)
+
+	source = source\gsub mixinStringPattern, "@(%1)"
+
+	return source
+
+parseMixinsIn = (source) ->
+	return {} unless game.ServerScriptService\FindFirstChild("Mixins") and 
+		game.ServerScriptService.Mixins\IsA("ModuleScript")
+
+	if source\find "@%((%w+)%)"
+		source = mixinRequire .. source
+
+		source = source\gsub "@%((%w+)%)", mixinString
+
+	return source
 
 hookChanges = (obj) ->
 	obj.Changed\connect (prop) ->
@@ -62,10 +88,19 @@ sendScript = (obj, open=true) ->
 		scriptCache[scriptCache[obj]] = obj
 		hookChanges obj
 
+	local syntax, source
+	if obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
+		syntax = "moon"
+		source = obj.MoonScript.Value
+	else
+		syntax = "lua"
+		source = parseMixinsOut obj.Source
+
 	data = 
 		:path
+		:syntax
+		:source
 		name: obj.Name
-		source: obj.Source
 		class: obj.ClassName
 		place_name: gameGUID
 		guid: scriptCache[obj]
@@ -91,10 +126,18 @@ startPoll = ->
 				body = http\GetAsync "http://localhost:#{PORT}/poll", true
 				command = http\JSONDecode body
 
-				if command.type == "update"
-					if scriptCache[command.data.guid]
-						sourceCache[scriptCache[command.data.guid]] = command.data.source
-						scriptCache[command.data.guid].Source = command.data.source
+				switch command.type
+					when "update"
+						if scriptCache[command.data.guid]
+							obj = scriptCache[command.data.guid]
+							sourceCache[scriptCache[command.data.guid]] = parseMixinsIn command.data.source
+							obj.Source = parseMixinsIn command.data.source
+
+							if command.data.moon and obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
+								obj.MoonScript.Value = command.data.moon
+					when "output"
+						return if #command.data.text == 0
+						debug command.data.text
 
 			failed += 1 unless success
 			failed = 0 if success
@@ -134,9 +177,26 @@ doSelection = ->
 	if #selection == 0
 		return alert "Select one or more scripts in the Explorer."
 
-	for object in *selection
-		if object\IsA "LuaSourceContainer"
-			sendScript object
+	for obj in *selection
+		if obj\IsA "LuaSourceContainer"
+			checkMoonHelper obj
+			sendScript obj
+
+checkMoonHelper = (obj, force) ->
+	return unless obj\IsA "LuaSourceContainer"
+	return if obj\FindFirstChild "MoonScript"
+	return if #obj.Source > 100
+
+	hasExt = obj.Name\sub(#obj.Name-4, #obj.Name) == ".moon"
+
+	if force or hasExt or
+		obj.Source\lower! == "m" or 
+		obj.Source\lower! == "moon" or 
+		obj.Source\lower! == "moonscript"
+			with Instance.new "StringValue", obj
+				.Name 	= "MoonScript"
+				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}'
+			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
 
 with alertBox = Instance.new "TextLabel"
 	.Parent 				= Instance.new "ScreenGui", cgui
@@ -162,4 +222,8 @@ uis.InputBegan\connect (input, gpe) ->
 	return if gpe
 
 	if input.KeyCode == Enum.KeyCode.B and uis\IsKeyDown(Enum.KeyCode.LeftControl)
+		if uis\IsKeyDown Enum.KeyCode.LeftAlt
+			for obj in *game.Selection\Get!
+				checkMoonHelper obj, true
+		
 		doSelection!

@@ -6,6 +6,7 @@ bodyParser		= require 'body-parser'
 fs 				= require 'fs'
 path 			= require 'path'
 mkdirp			= require 'mkdirp'
+{exec}			= require 'child_process'
 
 {BUILD, VERSION} = 
 	require './config.json'
@@ -59,7 +60,15 @@ server.post "/write/:action", (req, res) ->
 		else
 			ext = ""
 
-	filename 	= "#{data.name}#{ext}.lua"
+	switch data.syntax
+		when "lua"
+			fext = ".lua"
+		when "moon"
+			fext = ".moon"
+		else
+			fext = ".rbxs"
+
+	filename 	= "#{data.name}#{ext}#{fext}"
 	filepath 	= path.join(app.getPath("temp"), "RSync", data.place_name, data.path)
 	file 		= path.join(filepath, filename)
 
@@ -77,18 +86,36 @@ server.post "/write/:action", (req, res) ->
 			if fileCache[file] is data.guid
 				break
 
-	fileCache[file] = data.guid
-
 	mkdirp filepath, ->
 		fs.writeFileSync file, data.source
 
-		fs.watch file, (type) ->
-			if type is "change"
-				addCommand "update", 
-					guid: data.guid
-					source: fs.readFileSync file, 
-						encoding: 'utf8'
+		unless fileCache[file]
+			fs.watch file, (type) ->
+				if type is "change"
+					switch data.syntax
+						when "lua"
+							addCommand "update", 
+								guid: data.guid
+								source: fs.readFileSync file, 
+									encoding: 'utf8'
+						when "moon"
+							exec "moonc #{file}", (err, stdout, stderr) ->
+								if err
+									return addCommand "output",
+										text: stderr
 
+								addCommand "output",
+									text: stdout
+
+								try
+									addCommand "update",
+										guid: data.guid
+										source: fs.readFileSync path.join(filepath, "#{data.name}#{ext}.lua"), 
+											encoding: 'utf8'
+										moon: fs.readFileSync file, 
+											encoding: 'utf8'
+
+		fileCache[file] = data.guid
 		shell.openItem file if openAfter
 
 	res.send "OK"
