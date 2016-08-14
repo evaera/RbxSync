@@ -11,6 +11,7 @@ task "build:plugin", "build the plugin", ->
 
 task "build:app", "build electron app", ->
 	invoke "build:plugin"
+	invoke "build:coffee"
 
 	exec "electron-packager ./src RSync --platform=win32 --arch ia32 --asar --version 1.3.3", ->
 		console.log "Build complete"
