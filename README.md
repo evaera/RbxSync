@@ -22,7 +22,7 @@ By default, RSync will use a temporary folder, but using a persistent directory 
 
 This allows you to create a Git repository for all the scripts in your game super easily.
 
-To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<current user>\Documents\ROBLOX\RSync\<Place Name>`.
+To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<current user>\Documents\ROBLOX\RSync\<Place Name>`. **Note**: You must re-open your game in Studio after you create this value. And, make sure you turned `HttpEnabled` on!
 
 ![PMode Demo](http://i.imgur.com/I9i1G8K.png) ![Demo](http://i.imgur.com/pvF9Mhi.png)
 
@@ -66,6 +66,8 @@ print(__RSMIXIN('hello', script, getfenv()))
 
 ### MoonScript Support
 If you have MoonScript installed on your computer (have [`moonc`](http://moonscript.org/) in your PATH), RSync can automatically compile your scripts into Lua every time you save them and instantly push them to your game in Studio.
+
+**Note**: MoonScript mode is experimental and may not be stable. Additionaly, the mixins feature is not compatible with scripts in MoonScript mode.
 
 **To put a script in MoonScript mode**, there must be a StringValue named "MoonScript" inside of it. The plugin provides several shortcuts so you don't have to do this manually:
 - If you put `.moon` at the end of your script name (e.g. `KillScript.moon`, then press the *Open in Editor* button. It will remove the `.moon` from the name after it's created the value.
