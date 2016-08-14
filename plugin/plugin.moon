@@ -1,5 +1,5 @@
 -- BEGIN AUTO CONFIG --
-BUILD=4
+BUILD=5
 PORT=21496
 -- END AUTO CONFIG
 
@@ -214,9 +214,10 @@ scan = ->
 	lookIn game.StarterPlayer
 
 	game.DescendantAdded\connect (obj) ->
-		if obj\IsA "LuaSourceContainer"
-			justAdded = obj
-			sendScript obj, false
+		pcall ->
+			if obj\IsA "LuaSourceContainer"
+				justAdded = obj
+				sendScript obj, false
 
 	alert "All game scripts updated on filesystem, path in output"
 	debug "Documents\\ROBLOX\\RSync\\#{gameGUID}\\"
@@ -270,22 +271,23 @@ with alertBox = Instance.new "TextLabel"
 	.Visible 				= false
 	.TextWrapped			= true
 
-toolbar = plugin\CreateToolbar "RSync"
-button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
+if game.Name\match "Place[%d+]"
+	toolbar = plugin\CreateToolbar "RSync"
+	button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
 
-button.Click\connect doSelection
+	button.Click\connect doSelection
 
-uis.InputBegan\connect (input, gpe) ->
-	return if gpe
+	uis.InputBegan\connect (input, gpe) ->
+		return if gpe
 
-	if input.KeyCode == Enum.KeyCode.B and uis\IsKeyDown(Enum.KeyCode.LeftControl)
-		if uis\IsKeyDown Enum.KeyCode.LeftAlt
-			for obj in *game.Selection\Get!
-				checkMoonHelper obj, true
-		
-		doSelection!
+		if input.KeyCode == Enum.KeyCode.B and uis\IsKeyDown(Enum.KeyCode.LeftControl)
+			if uis\IsKeyDown Enum.KeyCode.LeftAlt
+				for obj in *game.Selection\Get!
+					checkMoonHelper obj, true
+			
+			doSelection!
 
-if http\FindFirstChild("PlaceName") and http.PlaceName\IsA("StringValue") and #http.PlaceName.Value > 0
-	gameGUID = http.PlaceName.Value
-	temp = false
-	scan!
+	if http\FindFirstChild("PlaceName") and http.PlaceName\IsA("StringValue") and #http.PlaceName.Value > 0
+		gameGUID = http.PlaceName.Value
+		temp = false
+		scan!
