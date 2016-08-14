@@ -24,7 +24,7 @@ This allows you to create a Git repository for all the scripts in your game supe
 
 To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<current user>\Documents\ROBLOX\RSync\<Place Name>`. **Note**: You must re-open your game in Studio after you create this value. And, make sure you turned `HttpEnabled` on!
 
-![PMode Demo](http://i.imgur.com/I9i1G8K.png) ![Demo](http://i.imgur.com/pvF9Mhi.png)
+![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 
 ### Mixins
 Mixins allow you to use the syntax `@(mixin_name)` in your scripts, which will return any values you set in the Mixins module. To use this feature, create a *ModuleScript* in *ReplicatedStorage* named `Mixins`. 
@@ -35,14 +35,17 @@ The module should return a table with string indexes for your mixin names. The v
 - `script`: The Script object that is using the mixin
 - `function_environment`: The result of `getfenv` in the function where the mixin is used
 
-**Example `Mixins` script** *(MoonScript Mode)*: 
-```moonscript
-{
-	hello: "Hi there!"
-	require_all_children: (mixin, script, env) ->
-		for child in *script\GetChildren!
-			if child\IsA "ModuleScript"
-				require child
+**Example `Mixins` script**: 
+```lua
+return {
+	hello = "Hi there!";
+	require_all_children = function(mixin, script, env)
+		for _, child in pairs(script:GetChildren()) do
+			if child:IsA("ModuleScript") then
+				require(child)
+			end
+		end
+	end;
 }
 ```
 
