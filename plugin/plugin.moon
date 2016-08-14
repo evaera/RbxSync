@@ -15,6 +15,7 @@ gameGUID 	= http\GenerateGUID!
 temp 		= true
 polling		= false
 failed		= 0
+justAdded	= nil
 
 mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
@@ -67,6 +68,9 @@ parseMixinsIn = (source) ->
 
 hookChanges = (obj) ->
 	obj.Changed\connect (prop) ->
+		if obj == justAdded
+			justAdded = nil
+			return
 		switch prop
 			when "Source"
 				if sourceCache[obj] == obj.Source
@@ -134,7 +138,7 @@ resetCache = ->
 	polling = false
 	scriptCache = {}
 	sourceCache = {}
-	gameGUID 	= http\GenerateGUID!
+	gameGUID 	= http\GenerateGUID! unless temp
 	debug "Resetting, if you restart the client you will need to reopen your scripts again, the files on disk will no longer be sent to this game instance as a result of the connection loss."
 
 startPoll = ->
@@ -211,6 +215,7 @@ scan = ->
 
 	game.DescendantAdded\connect (obj) ->
 		if obj\IsA "LuaSourceContainer"
+			justAdded = obj
 			sendScript obj, false
 
 	alert "All game scripts updated on filesystem, path in output"
