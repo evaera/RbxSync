@@ -252,7 +252,7 @@ checkMoonHelper = (obj, force) ->
 		obj.Source\lower! == "moonscript"
 			with Instance.new "StringValue", obj
 				.Name 	= "MoonScript"
-				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}'
+				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
 			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
 
 with alertBox = Instance.new "TextLabel"

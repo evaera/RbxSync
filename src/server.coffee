@@ -129,7 +129,7 @@ server.post "/write/:action", (req, res) ->
 								source: fs.readFileSync file, 
 									encoding: 'utf8'
 						when "moon"
-							exec "moonc #{file}", (err, stdout, stderr) ->
+							exec "moonc \"#{file}\"", (err, stdout, stderr) ->
 								if err
 									return addCommand "output",
 										text: stderr
