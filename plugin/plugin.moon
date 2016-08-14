@@ -229,10 +229,15 @@ doSelection = ->
 	if #selection == 0
 		return alert "Select one or more scripts in the Explorer."
 
+	one = false
 	for obj in *selection
 		if obj\IsA "LuaSourceContainer"
+			one = true
 			checkMoonHelper obj
 			sendScript obj
+
+	unless one
+		alert "Select one or more scripts in the Explorer."
 
 checkMoonHelper = (obj, force) ->
 	return unless obj\IsA "LuaSourceContainer"
