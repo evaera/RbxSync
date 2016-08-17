@@ -3,19 +3,20 @@ BUILD=5
 PORT=21496
 -- END AUTO CONFIG
 
-local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper, parseMixinsOut, parseMixinsIn, deleteScript
 
-uis 	= game\GetService "UserInputService"
-http 	= game\GetService "HttpService"
-cgui 	= game\GetService "CoreGui"
+UserInputService 	= game\GetService "UserInputService"
+HttpService 		= game\GetService "HttpService"
+CoreGui 			= game\GetService "CoreGui"
+
+local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
+local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName
 
 scriptCache = {}
 sourceCache = {}
-gameGUID 	= http\GenerateGUID!
+gameGUID 	= HttpService\GenerateGUID!
 temp 		= true
 polling		= false
 failed		= 0
-justAdded	= nil
 
 mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
@@ -91,11 +92,13 @@ deleteScript = (obj) ->
 	scriptCache[obj] = nil
 
 	pcall ->
-		http\PostAsync "http://localhost:#{PORT}/delete", http\JSONEncode(data), "ApplicationJson", false
+		HttpService\PostAsync "http://localhost:#{PORT}/delete", HttpService\JSONEncode(data), "ApplicationJson", false
 		sendScript obj, false
 
 sendScript = (obj, open=true) ->
 	return unless obj.Parent
+
+	print obj\GetFullName!
 	
 	stack = {}
 	parent = obj.Parent
@@ -108,7 +111,7 @@ sendScript = (obj, open=true) ->
 		path ..= ancestor.Name .. "/"
 
 	if not scriptCache[obj]
-		scriptCache[obj] = http\GenerateGUID false
+		scriptCache[obj] = HttpService\GenerateGUID false
 		scriptCache[scriptCache[obj]] = obj
 		hookChanges obj
 
@@ -131,14 +134,14 @@ sendScript = (obj, open=true) ->
 		guid: scriptCache[obj]
 
 	pcall ->
-		http\PostAsync "http://localhost:#{PORT}/write/#{open and 'open' or 'update'}", http\JSONEncode(data), "ApplicationJson", false
+		HttpService\PostAsync "http://localhost:#{PORT}/write/#{open and 'open' or 'update'}", HttpService\JSONEncode(data), "ApplicationJson", false
 
 
 resetCache = ->
 	polling = false
 	scriptCache = {}
 	sourceCache = {}
-	gameGUID 	= http\GenerateGUID! unless temp
+	gameGUID 	= HttpService\GenerateGUID! unless temp
 	debug "Resetting, if you restart the client you will need to reopen your scripts again, the files on disk will no longer be sent to this game instance as a result of the connection loss."
 
 startPoll = ->
@@ -148,8 +151,8 @@ startPoll = ->
 	Spawn ->
 		while true
 			success = pcall ->
-				body = http\GetAsync "http://localhost:#{PORT}/poll", true
-				command = http\JSONDecode body
+				body = HttpService\GetAsync "http://localhost:#{PORT}/poll", true
+				command = HttpService\JSONDecode body
 
 				switch command.type
 					when "update"
@@ -174,7 +177,7 @@ startPoll = ->
 
 init = (cb) ->
 	success, err = pcall ->
-		data = http\JSONDecode http\PostAsync("http://localhost:#{PORT}/new", http\JSONEncode(place_name: gameGUID), "ApplicationJson", false)
+		data = HttpService\JSONDecode HttpService\PostAsync("http://localhost:#{PORT}/new", HttpService\JSONEncode(place_name: gameGUID), "ApplicationJson", false)
 		if data.status == "OK"
 			if data.build == BUILD
 				startPoll!
@@ -256,8 +259,24 @@ checkMoonHelper = (obj, force) ->
 				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
 			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
 
+checkForPlaceName = (obj) ->
+	unless obj
+		if HttpService\FindFirstChild "PlaceName"
+			obj = HttpService.PlaceName
+
+	return unless obj
+
+	obj.Changed\connect ->
+		checkForPlaceName obj
+
+	if obj\IsA("StringValue") and #obj.Value > 0
+		resetCache!
+		gameGUID = obj.Value
+		temp = false
+		scan!
+
 with alertBox = Instance.new "TextLabel"
-	.Parent 				= Instance.new "ScreenGui", cgui
+	.Parent 				= Instance.new "ScreenGui", CoreGui
 	.Name 					= "RSync Alert"
 	.BackgroundColor3 		= Color3.new 1, 1, 1
 	.BackgroundTransparency	= 0.3
@@ -277,17 +296,15 @@ if game.Name\match "Place[%d+]"
 
 	button.Click\connect doSelection
 
-	uis.InputBegan\connect (input, gpe) ->
+	UserInputService.InputBegan\connect (input, gpe) ->
 		return if gpe
 
-		if input.KeyCode == Enum.KeyCode.B and uis\IsKeyDown(Enum.KeyCode.LeftControl)
-			if uis\IsKeyDown Enum.KeyCode.LeftAlt
+		if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
+			if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
 				for obj in *game.Selection\Get!
 					checkMoonHelper obj, true
 			
 			doSelection!
 
-	if http\FindFirstChild("PlaceName") and http.PlaceName\IsA("StringValue") and #http.PlaceName.Value > 0
-		gameGUID = http.PlaceName.Value
-		temp = false
-		scan!
+	checkForPlaceName!
+	HttpService.ChildAdded\connect checkForPlaceName
