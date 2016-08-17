@@ -22,7 +22,7 @@ By default, RSync will use a temporary folder, but using a persistent directory 
 
 This allows you to create a Git repository for all the scripts in your game super easily.
 
-To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<current user>\Documents\ROBLOX\RSync\<Place Name>`. **Note**: You must re-open your game in Studio after you create this value. And, make sure you turned `HttpEnabled` on!
+To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<current user>\Documents\ROBLOX\RSync\<Place Name>`. 
 
 ![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 
