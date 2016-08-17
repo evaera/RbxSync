@@ -31,7 +31,7 @@ deleteFile = (guid, fileToo) ->
 		delete fileCache[guid]
 
 server = express()
-server.use bodyParser.json()
+server.use bodyParser.json(limit: '50mb')
 
 server.post "/new", (req, res) ->
 	data = req.body
