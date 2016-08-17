@@ -14,10 +14,12 @@ httpServer 		= require './server'
 
 tray 	= null
 
+# Destroys the tray icon and quits the app. #
 quitApp = ->
 	tray.destroy() if tray?
 	app.quit()
 
+# Copies the packaged plugin.lua file into Studio's default plugin directory. #
 copyPlugin = ->
 	filepath = path.join(app.getPath("appData"), "..", "Local", "Roblox", "Plugins", "RSync")
 
@@ -25,6 +27,7 @@ copyPlugin = ->
 		fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.lua"))
 		fs.writeFileSync path.join(filepath, "VERSION"), BUILD
 
+# Checks for an update in the GitHub repository. #
 checkForUpdate = (menu) ->
 	request.get "https://raw.githubusercontent.com/evaera/RSync/master/src/config.json", (err, res, body) ->
 		return if err
@@ -39,6 +42,7 @@ checkForUpdate = (menu) ->
 		return unless typeof data.BUILD is "number"
 
 		if data.BUILD > BUILD
+			# Add the update button to the tray context menu. #
 			menu.insert 0, new MenuItem({type: "separator"})
 			menu.insert 0, new MenuItem({
 				label: "Download New Update...",
@@ -46,16 +50,21 @@ checkForUpdate = (menu) ->
 					shell.openExternal "https://github.com/evaera/RSync/releases"
 			})
 
+			# Display a notification that there is an update. #
 			tray.displayBalloon 
 				title: "A new update for RSync is available."
 				content: "Right-click on the tray icon to download the new update."
 
+# Called when the electron application is ready. #
 app.on 'ready', ->
+	# Test the port before we bind our http server to it. #
 	portastic.test PORT, (open) ->
 		if open
+			# If open, copy the plugin and enable the https erver. #
 			copyPlugin()
 			httpServer.listen PORT
 		else
+			# If not open, show an error message and quit the app. #
 			dialog.showMessageBox
 				type: "warning"
 				title: " "
@@ -64,7 +73,7 @@ app.on 'ready', ->
 			, ->
 				quitApp()
 		
-
+	# Create the tray icon and context menu. #
 	tray = new Tray path.join(__dirname, "icon.ico")
 
 	tray.setToolTip "RSync Helper"
@@ -90,4 +99,5 @@ app.on 'ready', ->
 	]
 	tray.setContextMenu menu
 
+	# Check for an update. 
 	checkForUpdate menu

@@ -1,9 +1,9 @@
 -- BEGIN AUTO CONFIG --
-BUILD=5
+BUILD=6
 PORT=21496
--- END AUTO CONFIG
+-- END AUTO CONFIG --
 
-
+-- Variable declarations --
 UserInputService 	= game\GetService "UserInputService"
 HttpService 		= game\GetService "HttpService"
 CoreGui 			= game\GetService "CoreGui"
@@ -22,12 +22,16 @@ mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXI
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 
+-- A wrapper for `print` that prefixes plugin version information.--
 debug = (...) ->
 	print "[RSync build #{BUILD}] ", ...
 
+-- Creates a GUI alert to tell the user something, 
+-- also calls `debug` on the arguments. --
 alert = (...) ->
 	debug ...
 
+	-- Use tick to save the time of the most recent alert. --
 	alertActive = tick!
 
 	text = ""
@@ -38,13 +42,17 @@ alert = (...) ->
 	alertBox.Text = text
 	alertBox.Visible = true
 
+	-- Store the current alert's time. --
 	snapshot = alertActive
 
 	Spawn ->
 		wait 5
+		-- If the alert is still the most recentl, hide it. 
+		-- Otherwise, keep it open since another alert has been issued. --
 		if snapshot == alertActive
 			alertBox.Visible = false
 
+-- Takes the injected mixin code and reverts it back to special RSync syntax. --
 parseMixinsOut = (source) ->
 	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
 		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
@@ -56,6 +64,7 @@ parseMixinsOut = (source) ->
 
 	return source
 
+-- Parses the special Mixin syntax and replaces it with the injected code. --
 parseMixinsIn = (source) ->
 	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
 		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
@@ -67,21 +76,29 @@ parseMixinsIn = (source) ->
 
 	return source
 
+-- Called with a LuaSourceContainer object to begin tracking script changes. --
 hookChanges = (obj) ->
 	obj.Changed\connect (prop) ->
+
+		-- Ignore the change if the script was just added, since the Change event gets called immediately. --
 		if obj == justAdded
 			justAdded = nil
 			return
+
 		switch prop
 			when "Source"
+				-- Ignore the change if we are the ones who changed the script. --
 				if sourceCache[obj] == obj.Source
 					sourceCache[obj] = nil
 				else
 					sendScript obj, false
 			when "Parent", "Name"
+				-- If the Parent or Name properties change, delete the script. 
+				-- deleteScript will handle sending the script again after the request completes if Parent is not nil. --
 				deleteScript obj
 
-
+-- Deletes a script from the user's filesystem. 
+-- Called when a script's `Name` or `Parent` properties are changed. --
 deleteScript = (obj) ->
 	return unless scriptCache[obj]
 
@@ -93,13 +110,17 @@ deleteScript = (obj) ->
 
 	pcall ->
 		HttpService\PostAsync "http://localhost:#{PORT}/delete", HttpService\JSONEncode(data), "ApplicationJson", false
+		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored. 
+		-- In cases of name change, this is done so we can wait for the delete request to finish before sending the newly-named script. --
 		sendScript obj, false
 
+-- Sends a script to the filesystem. 
+-- Optional second parameter, which will open the file automatically in a code editor if true. --
 sendScript = (obj, open=true) ->
+	-- If the script doesn't have a Parent, ignore it. --
 	return unless obj.Parent
 
-	print obj\GetFullName!
-	
+	-- Generate the script ancestry path to map to the filesystem. --
 	stack = {}
 	parent = obj.Parent
 	while parent != game
@@ -110,11 +131,16 @@ sendScript = (obj, open=true) ->
 	for ancestor in *stack
 		path ..= ancestor.Name .. "/"
 
+	-- Check if this is the first time we've seen this script. --
 	if not scriptCache[obj]
+		-- Assign the script a GUID, which is used for internally tracking the script changes. --
 		scriptCache[obj] = HttpService\GenerateGUID false
+		-- Also map the GUID to the object for easy referencing. --
 		scriptCache[scriptCache[obj]] = obj
+		-- Hook up the Change event on the script. --
 		hookChanges obj
 
+	-- Determine what syntax the script is using. --
 	local syntax, source
 	if obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
 		syntax = "moon"
@@ -123,6 +149,7 @@ sendScript = (obj, open=true) ->
 		syntax = "lua"
 		source = parseMixinsOut obj.Source
 
+	-- Send the data to the endpoint. --
 	data = 
 		:path
 		:syntax
@@ -136,7 +163,8 @@ sendScript = (obj, open=true) ->
 	pcall ->
 		HttpService\PostAsync "http://localhost:#{PORT}/write/#{open and 'open' or 'update'}", HttpService\JSONEncode(data), "ApplicationJson", false
 
-
+-- Resets the session, so it can be reinitialized.
+-- Also called when there is a conneciton loss. --
 resetCache = ->
 	polling = false
 	scriptCache = {}
@@ -144,6 +172,7 @@ resetCache = ->
 	gameGUID 	= HttpService\GenerateGUID! unless temp
 	debug "Resetting, if you restart the client you will need to reopen your scripts again, the files on disk will no longer be sent to this game instance as a result of the connection loss."
 
+-- Begins the long-polling to the local server. --
 startPoll = ->
 	return if polling
 	polling = true
@@ -154,40 +183,52 @@ startPoll = ->
 				body = HttpService\GetAsync "http://localhost:#{PORT}/poll", true
 				command = HttpService\JSONDecode body
 
+				-- Determine what kind of command the server has sent us. --
 				switch command.type
 					when "update"
+						-- If we don't know about the script, then ignore it. --
 						if scriptCache[command.data.guid]
 							obj = scriptCache[command.data.guid]
+							-- Save the script source in sourceCache so we can ignore this change when the script changes from us setting the Source. --
 							sourceCache[scriptCache[command.data.guid]] = parseMixinsIn command.data.source
+
+							-- Update the script. --
 							obj.Source = parseMixinsIn command.data.source
 
 							if command.data.moon and obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
 								obj.MoonScript.Value = command.data.moon
 					when "output"
+						-- An output command from the server, useful for showing information such as Moonscript compile errors. --
 						return if #command.data.text == 0
 						debug command.data.text
 
+			-- Increment the failed counter if the request failed, or reset it upon success. --
 			failed += 1 unless success
 			failed = 0 if success
 
+			-- If the previous three requests have failed, determine there is a connection issue and stop long-polling. --
 			if failed > 3
 				resetCache!
 				alert "Lost connection to the helper client, stopping."
 				break
 
+-- Performs the initial handshake and version check with the server. --
 init = (cb) ->
 	success, err = pcall ->
 		data = HttpService\JSONDecode HttpService\PostAsync("http://localhost:#{PORT}/new", HttpService\JSONEncode(place_name: gameGUID), "ApplicationJson", false)
 		if data.status == "OK"
+			-- Check that the version of the plugin matches the version of the helper client. --
 			if data.build == BUILD
 				startPoll!
 				cb!
 			else
 				alert "Plugin version does not match helper version, restart studio."
 		else
+			-- An unknown error has occurred. --
 			alert "Unhandled error, please check output."
 			debug data.error
 
+	-- Show special alerts for certain common errors. --
 	unless success
 		if err\find "Http requests are not enabled"
 			alert "Set HttpService.HttpEnabled to true to use this feature."
@@ -197,9 +238,12 @@ init = (cb) ->
 			alert "Unhandled error, please check output."
 			debug "An error occurred: #{err}"
 
+-- Scans the game for scripts, used with persistent mode. --
 scan = ->
+	-- If the initial handshake hasn't been performed, do it first. --
 	return init scan unless polling
 
+	-- A recursive function used to check the game for scripts. --
 	lookIn = (obj) ->
 		for child in *obj\GetChildren!
 			if child\IsA "LuaSourceContainer"
@@ -216,6 +260,7 @@ scan = ->
 	lookIn game.StarterPack
 	lookIn game.StarterPlayer
 
+	-- When a new script is added to the game, handle it correctly. --
 	game.DescendantAdded\connect (obj) ->
 		pcall ->
 			if obj\IsA "LuaSourceContainer"
@@ -225,14 +270,18 @@ scan = ->
 	alert "All game scripts updated on filesystem, path in output"
 	debug "Documents\\ROBLOX\\RSync\\#{gameGUID}\\"
 
+-- Handles checking the user selection for scripts, called when the Open in Editor button is pressed. --
 doSelection = ->
+	-- If the initial handshake hasn't been performed, do it first. --
 	return init doSelection unless polling
 
 	selection = game.Selection\Get!
 
+	-- Check if selection is empty. --
 	if #selection == 0
 		return alert "Select one or more scripts in the Explorer."
 
+	-- Search the selection for scripts, and send them. --
 	one = false
 	for obj in *selection
 		if obj\IsA "LuaSourceContainer"
@@ -240,9 +289,12 @@ doSelection = ->
 			checkMoonHelper obj
 			sendScript obj
 
+	-- If at least one script wasn't found, show the user a help message. --
 	unless one
 		alert "Select one or more scripts in the Explorer."
 
+-- Checks if a script should be automatically set to MoonScript mode when a user presses the plugin button.
+-- Optional parameter `force`, which will bypass the check and forcibly convert to MoonScript mode. --
 checkMoonHelper = (obj, force) ->
 	return unless obj\IsA "LuaSourceContainer"
 	return if obj\FindFirstChild "MoonScript"
@@ -259,22 +311,27 @@ checkMoonHelper = (obj, force) ->
 				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
 			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
 
+-- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
+	-- If obj is nil, try to find it. If it is nil, return. --
 	unless obj
 		if HttpService\FindFirstChild "PlaceName"
 			obj = HttpService.PlaceName
 
 	return unless obj
 
+	-- Wait for any changes to objects in HttpService.
 	obj.Changed\connect ->
 		checkForPlaceName obj
 
+	-- If the object meets the requirements, enable persistent mode. -- 
 	if obj\IsA("StringValue") and #obj.Value > 0
 		resetCache!
 		gameGUID = obj.Value
 		temp = false
 		scan!
 
+-- Create the alert box and place it in CoreGui. --
 with alertBox = Instance.new "TextLabel"
 	.Parent 				= Instance.new "ScreenGui", CoreGui
 	.Name 					= "RSync Alert"
@@ -290,12 +347,19 @@ with alertBox = Instance.new "TextLabel"
 	.Visible 				= false
 	.TextWrapped			= true
 
+-- Check that the game is not in test mode before enabling the plugin. 
+-- This works because Studio names all edit-mode places in the format PlaceN, where N is a number.
+-- All places in test mode either take the name of the file or the name of the place online.
+-- This obviously won't work in all cases, but it should work with the majority of cases. --
 if game.Name\match "Place[%d+]"
+
+	-- Create the plugin toolbar and button. --
 	toolbar = plugin\CreateToolbar "RSync"
 	button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
 
 	button.Click\connect doSelection
 
+	-- Hook up the keybinds Ctrl+B and Ctrl+Alt+B --
 	UserInputService.InputBegan\connect (input, gpe) ->
 		return if gpe
 
@@ -306,5 +370,6 @@ if game.Name\match "Place[%d+]"
 			
 			doSelection!
 
+	-- Check if we should turn persistent mode on. --
 	checkForPlaceName!
 	HttpService.ChildAdded\connect checkForPlaceName
