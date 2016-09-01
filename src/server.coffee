@@ -157,25 +157,18 @@ server.post "/write/:action", (req, res) ->
 									encoding: 'utf8'
 						when "moon"
 							# Compiles MoonScript and sends it back to the plugin. #
-							exec "moonc \"#{file}\"", (err, stdout, stderr) ->
+							exec "moonc -p \"#{file}\"", (err, stdout, stderr) ->
 								if err
 									# If there was an error while compiling, send it to Studio's output. #
 									return addCommand "output",
 										text: stderr
 
-								addCommand "output",
-									text: stdout
-
 								try
 									addCommand "update",
 										guid: data.guid
-										source: fs.readFileSync path.join(filepath, "#{data.name}#{ext}.lua"), 
-											encoding: 'utf8'
+										source: stdout
 										moon: fs.readFileSync file, 
 											encoding: 'utf8'
-									try
-										# Delete the compiled .lua file #
-										fs.unlinkSync path.join(filepath, "#{data.name}#{ext}.lua")
 
 		# Update our caches with new information about the file. #
 		fileCache[file] 		= data.guid

@@ -21,7 +21,23 @@ failed		= 0
 mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
+moonBoilerplate = [=[
+-- RSync Boilerplate --
+local function mixin(name)
+	if not game.ReplicatedStorage:FindFirstChild("Mixins") then
+		return
+	end
 
+	local mixins = require(game.ReplicatedStorage.Mixins)
+
+	if type(mixins[name]) == "function" then
+		return mixins[name](name, script, getfenv(2))
+	else
+		return mixins[name]
+	end
+end
+-- End Boilerplate --
+]=]
 -- A wrapper for `print` that prefixes plugin version information.--
 debug = (...) ->
 	print "[RSync build #{BUILD}] ", ...
@@ -87,6 +103,9 @@ hookChanges = (obj) ->
 
 		switch prop
 			when "Source"
+				-- Ignore MoonScript mode scripts --
+				if obj\FindFirstChild "MoonScript"
+					return
 				-- Ignore the change if we are the ones who changed the script. --
 				if sourceCache[obj] == obj.Source
 					sourceCache[obj] = nil
@@ -189,11 +208,19 @@ startPoll = ->
 						-- If we don't know about the script, then ignore it. --
 						if scriptCache[command.data.guid]
 							obj = scriptCache[command.data.guid]
+
+							-- Only parse mixins if Lua. --
+							local source
+							if command.data.moon
+								source = moonBoilerplate .. command.data.source
+							else
+								source = parseMixinsIn command.data.source
+
 							-- Save the script source in sourceCache so we can ignore this change when the script changes from us setting the Source. --
-							sourceCache[scriptCache[command.data.guid]] = parseMixinsIn command.data.source
+							sourceCache[scriptCache[command.data.guid]] = source
 
 							-- Update the script. --
-							obj.Source = parseMixinsIn command.data.source
+							obj.Source = source
 
 							if command.data.moon and obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
 								obj.MoonScript.Value = command.data.moon
