@@ -1,5 +1,5 @@
 -- BEGIN AUTO CONFIG --
-BUILD=7
+BUILD=8
 PORT=21496
 -- END AUTO CONFIG --
 
@@ -23,8 +23,16 @@ mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 moonBoilerplate = [=[
 -- RSync Boilerplate --
-local function mixin(name)
+local function mixin(name, automatic)
+	if (not automatic) and (name == "autoload" or name == "client" or name == "server") then
+		error("RSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
+	end
+	
 	if not game.ReplicatedStorage:FindFirstChild("Mixins") then
+		return
+	end
+
+	if script.Name == "Mixins" and script.Parent == game.ReplicatedStorage then
 		return
 	end
 
@@ -36,6 +44,9 @@ local function mixin(name)
 		return mixins[name]
 	end
 end
+
+mixin("autoload", true)
+mixin(game.Players.LocalPlayer and "client" or "server", true)
 -- End Boilerplate --
 ]=]
 -- A wrapper for `print` that prefixes plugin version information.--

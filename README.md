@@ -70,7 +70,11 @@ print(__RSMIXIN('hello', script, getfenv()))
 ### MoonScript Support
 If you have MoonScript installed on your computer (have [`moonc`](http://moonscript.org/) in your PATH), RSync can automatically compile your scripts into Lua every time you save them and instantly push them to your game in Studio.
 
-Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`.
+Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`. In MoonScript mode only, there are three special mixin names, which can be used to inject things into the environment:
+
+- `autoload`: This mixin is automatically run at the start of every script.
+- `client`: This mixin is automatically run at the start of every script running on the client.
+- `server`: This mixin is automatically run at the start of every script running on the server.
 
 **To put a script in MoonScript mode**, there must be a StringValue named "MoonScript" inside of it. The plugin provides several shortcuts so you don't have to do this manually:
 - If you put `.moon` at the end of your script name (e.g. `KillScript.moon`, then press the *Open in Editor* button. It will remove the `.moon` from the name after it's created the value.
