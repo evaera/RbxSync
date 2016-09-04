@@ -7,8 +7,10 @@ RSync is an open source ROBLOX plugin that easily integrates any third-party cod
 ## Download
 Available in the [releases section.](https://github.com/evaera/RSync/releases/latest)
 
+**Notice**: The executable will most likely cause Windows to alert you with a fullscreen SmartScreen warning because this file is not commonly downloaded. To run anyway, click *More info* then click *Run anyway*. If you're wary, you can build the plugin from the source with the instructions below.
+
 ## Installation 
-RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. 
+RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the plugin direcotry in your Studio settings, you will need to drag the RSync folder from `%localappdata%\Roblox\Plugins` to your configured plugins folder.)
 
 Files will open with your system default `.lua` editor.
 
@@ -29,7 +31,7 @@ To enable this feature, create a `StringValue` in `HttpService` named `PlaceName
 ### Mixins
 Mixins allow you to use the syntax `@(mixin_name)` in your scripts, which will return any values you set in the Mixins module. To use this feature, create a *ModuleScript* in *ReplicatedStorage* named `Mixins`. 
 
-The module should return a table with string indexes for your mixin names. The values can be any type, but if they are a function, the function will be executed, given the arguments `(mixin_name, script, function\_environment)`. 
+The module should return a table with string indexes for your mixin names. The values can be any type, but if they are a function, the function will be executed, given the arguments `(mixin_name, script, function_environment)`. 
 
 - `mixin_name`: The name of the mixin, e.g. what is `@(here)`.
 - `script`: The Script object that is using the mixin
@@ -86,11 +88,16 @@ The ROBLOX Studio plugin must be built before RSync will work, **even for develo
 
 ### Prerequisites 
 - `npm install -g electron-packager`
+- `npm install -g electron-prebuilt`
 - `npm install -g coffee-script`
 - You must have [`moonc`](http://moonscript.org/) in your PATH.
 
 ### Building the Plugin
 Run `cake build:plugin`
 
-### Building the entire app
+### Building and running the app for developmental testing
+Go to the `./src` directory and run `npm install` to install the dependencies
+Run `cake b && electron src`
+
+### Building the entire app into executable
 Run `cake build:app`
