@@ -1,5 +1,5 @@
 -- BEGIN AUTO CONFIG --
-BUILD=8
+BUILD=9
 PORT=21496
 -- END AUTO CONFIG --
 
@@ -389,25 +389,26 @@ with alertBox = Instance.new "TextLabel"
 -- This works because Studio names all edit-mode places in the format PlaceN, where N is a number.
 -- All places in test mode either take the name of the file or the name of the place online.
 -- This obviously won't work in all cases, but it should work with the majority of cases. --
-if game.Name\match "Place[%d+]"
+if game.Name\match("Place[%d+]") and
+	-- Studio mode is both server and client. If not both, then user is testing in server/client mode. --
+	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
+		-- Create the plugin toolbar and button. --
+		toolbar = plugin\CreateToolbar "RSync"
+		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
 
-	-- Create the plugin toolbar and button. --
-	toolbar = plugin\CreateToolbar "RSync"
-	button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
+		button.Click\connect doSelection
 
-	button.Click\connect doSelection
+		-- Hook up the keybinds Ctrl+B and Ctrl+Alt+B --
+		UserInputService.InputBegan\connect (input, gpe) ->
+			return if gpe
 
-	-- Hook up the keybinds Ctrl+B and Ctrl+Alt+B --
-	UserInputService.InputBegan\connect (input, gpe) ->
-		return if gpe
+			if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
+				if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
+					for obj in *game.Selection\Get!
+						checkMoonHelper obj, true
+				
+				doSelection!
 
-		if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
-			if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
-				for obj in *game.Selection\Get!
-					checkMoonHelper obj, true
-			
-			doSelection!
-
-	-- Check if we should turn persistent mode on. --
-	checkForPlaceName!
-	HttpService.ChildAdded\connect checkForPlaceName
+		-- Check if we should turn persistent mode on. --
+		checkForPlaceName!
+		HttpService.ChildAdded\connect checkForPlaceName
