@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>RSync</title>
+	<link href="style.css" rel="stylesheet" type="text/css" />
+	<link href="waves.min.css" rel="stylesheet" type="text/css" />
+	<link href="animate.css" rel="stylesheet" type="text/css" />
+	<script src="jquery.js"></script>
+	<script>
+	    try {
+	        $ = jQuery = module.exports;
+	    } catch(e) {}
+	</script>
+</head>
+<body>
+	<script>
+		document.addEventListener('dragover', event => event.preventDefault())
+		document.addEventListener('drop', event => event.preventDefault())
+	</script>
+	<div id="drag"></div>
+	<img src="icons/close.svg" id="close-button" class="icon-button" onclick="window.close()" />
+
+	
+	<div id="home" class="center splash">
+		<div class="animated zoomIn">
+			<img src="icon.png" class="logo" />
+			<h2>RSync</h2>
+		</div>
+		<div class="animated fadeIn" style="animation-delay: 1s;">
+			<div id="main-icons">
+				<ul>
+					<li>
+						<img src="icons/settings.svg" class="icon-button" onclick="settings()" />
+						<span>Customize RSync</span>
+					</li>
+					<li>
+						<img src="icons/power.svg" class="icon-button" onclick="quit()" />
+						<span>Stop RSync</span>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+
+	<div id="footer" class="center footer animated fadeIn" style="animation-delay: 1s">
+		<img src="icon.png" style="height: 16px; vertical-align: -4px;" /> with &#10084; by evaera
+	</div>
+
+	<div id="update" class="center footer animated slideInUp" style="display: none; animation-delay: 0.5s;" onclick="update()">
+		<strong>Update Available!</strong> Click here to download.
+	</div>
+
+	<div id="settings" class="animated zoomInRight">
+		<img src="icons/back.svg" id="back-button" class="icon-button" onclick="home()" />
+		<img src="icon.png" class="logo" />
+		<div class="container">
+			<div class="setting">
+				<h4>ROBLOX Studio Plugin Folder Path</h4>
+				<span id="plugin-path-text" class="filepath"></span>
+				<button onclick="choosePluginPath()" class="waves">Change Folder</button>
+			</div>
+			<div class="setting">
+				<h4>Persistent Mode Path</h4>
+				<span id="pm-path-text" class="filepath"></span>
+				<button onclick="choosePmPath()" class="waves">Change Folder</button>
+			</div>
+		</div>
+	</div>
+	
+	<script src="waves.min.js"></script>
+	<script src="ui.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 -- BEGIN AUTO CONFIG --
-BUILD=9
+BUILD=10
 PORT=21496
 -- END AUTO CONFIG --
 
@@ -11,6 +11,7 @@ CoreGui 			= game\GetService "CoreGui"
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName
 
+pmPath 		= "Documents\\ROBLOX\\RSync"
 scriptCache = {}
 sourceCache = {}
 gameGUID 	= HttpService\GenerateGUID!
@@ -199,7 +200,7 @@ resetCache = ->
 	polling = false
 	scriptCache = {}
 	sourceCache = {}
-	gameGUID 	= HttpService\GenerateGUID! unless temp
+	gameGUID 	= HttpService\GenerateGUID! if temp
 	debug "Resetting, if you restart the client you will need to reopen your scripts again, the files on disk will no longer be sent to this game instance as a result of the connection loss."
 
 -- Begins the long-polling to the local server. --
@@ -257,6 +258,7 @@ init = (cb) ->
 		if data.status == "OK"
 			-- Check that the version of the plugin matches the version of the helper client. --
 			if data.build == BUILD
+				pmPath = data.pm
 				startPoll!
 				cb!
 			else
@@ -306,7 +308,7 @@ scan = ->
 				sendScript obj, false
 
 	alert "All game scripts updated on filesystem, path in output"
-	debug "Documents\\ROBLOX\\RSync\\#{gameGUID}\\"
+	debug "\\#{pmPath}\\#{gameGUID}\\"
 
 -- Handles checking the user selection for scripts, called when the Open in Editor button is pressed. --
 doSelection = ->
@@ -373,9 +375,10 @@ checkForPlaceName = (obj) ->
 with alertBox = Instance.new "TextLabel"
 	.Parent 				= Instance.new "ScreenGui", CoreGui
 	.Name 					= "RSync Alert"
-	.BackgroundColor3 		= Color3.new 1, 1, 1
-	.BackgroundTransparency	= 0.3
-	.BorderColor3 			= Color3.new 1, 1, 1
+	.BackgroundColor3 		= Color3.new 231/255, 76/255, 60/255
+	.TextColor3				= Color3.new 1, 1, 1
+	.BackgroundTransparency	= 0
+	.BorderColor3 			= Color3.new 231/255, 76/255, 60/255
 	.BorderSizePixel 		= 30
 	.Position 				= UDim2.new 0.5, -150, 0.5, -25
 	.Size 					= UDim2.new 0, 300, 0, 50

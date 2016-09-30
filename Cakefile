@@ -17,13 +17,19 @@ task "build:app", "build electron app", ->
 		console.log "Build complete"
 
 task "build:coffee", "build the coffee files into javascript", ->
-	exec "coffee -c ."
-	console.log "CoffeeScript Compiled"
+	exec "coffee -c .", (err, stdio, stderr) ->
+		console.log stderr
+		console.log "CoffeeScript Compiled"
+
+task "build:sass", "Compile scss into css", ->
+	exec "sass ./src/app/style.scss ./src/app/style.css", ->
+		console.log "Sass compiled"
 
 task "b", "Build stuff needed before dev testing, run as cake b && electron src", ->
 	console.log "Building..."
 
 	invoke "build:coffee"
+	invoke "build:sass"
 	invoke "build:plugin"
 
 	

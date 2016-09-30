@@ -1,4 +1,4 @@
-{app, BrowserWindow, Tray, Menu, MenuItem, shell, dialog} =
+{app, BrowserWindow, Tray, Menu, MenuItem, shell, dialog, ipcMain} =
 	require 'electron'
  
 fs 				= require 'fs'
@@ -13,15 +13,19 @@ httpServer 		= require './server'
 	require './config.json'
 
 tray 	= null
+win 	= null
+
+console.log "Starting application..."
 
 # Destroys the tray icon and quits the app. #
 quitApp = ->
 	tray.destroy() if tray?
+	win.destroy() if win?
 	app.quit()
 
 # Copies the packaged plugin.lua file into Studio's default plugin directory. #
 copyPlugin = ->
-	filepath = path.join(app.getPath("appData"), "..", "Local", "Roblox", "Plugins", "RSync")
+	filepath = path.join httpServer.getSetting('pluginPath'), "RSync"
 
 	mkdirp filepath, ->
 		fs.writeFileSync path.join(filepath, "rsync.lua"), fs.readFileSync(path.join(__dirname, "plugin.lua"))
@@ -50,6 +54,8 @@ checkForUpdate = (menu) ->
 					shell.openExternal "https://github.com/evaera/RSync/releases"
 			})
 
+			win.webContents.send 'updateAvailable'
+
 			# Display a notification that there is an update. #
 			tray.displayBalloon 
 				title: "A new update for RSync is available."
@@ -68,7 +74,7 @@ app.on 'ready', ->
 			dialog.showMessageBox
 				type: "warning"
 				title: " "
-				message: "RSync could not start the local HTTP server, please ensure no other processes are using port #{PORT}."
+				message: "It appears that another instance of RSync is already running. (port #{PORT})"
 				buttons: []
 			, ->
 				quitApp()
@@ -99,5 +105,50 @@ app.on 'ready', ->
 	]
 	tray.setContextMenu menu
 
+	tray.on 'click', ->
+		win.show() if win?
+
+	win = new BrowserWindow
+		icon: path.join __dirname, "icon.ico"
+		height: 400
+		width: 350
+		resizable: false
+		autoHideMenuBar: true
+		title: "RSync"
+		backgroundColor: "#e74c3c"
+		frame: false
+		fullscreenable: false
+		transparent: true;
+
+	win.on 'close', (event) ->
+		event.preventDefault()
+		win.hide()
+
+	win.loadURL path.join(__dirname, "app/app.html")
+
+	win.show()
+
 	# Check for an update. 
 	checkForUpdate menu
+
+	console.log "Ready."
+
+ipcMain.on 'quit', () ->
+	quitApp()
+	
+ipcMain.on 'update', ->
+	shell.openExternal "https://github.com/evaera/RSync/releases"
+	quitApp()
+
+ipcMain.on 'setSettingPath', (event, name) ->
+	dialog.showOpenDialog win, {
+		title: "Select #{name}"
+		defaultPath: httpServer.getSetting(name)
+		properties: ['openDirectory', 'showHiddenFiles']
+	}, (files) ->
+		if files?
+			httpServer.setSetting name, files[0]
+			win.webContents.send 'updatePaths'
+
+ipcMain.on 'getPath', (event, name) ->
+	event.returnValue = httpServer.getSetting(name)

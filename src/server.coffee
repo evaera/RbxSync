@@ -17,6 +17,32 @@ fileCache 	= {}
 watchers 	= {}
 guidCache	= {}
 
+settings = {}
+settingsPath = path.join app.getPath("userData"), "settings.json"
+getSetting = (name) ->
+	return settings[name] if settings[name]?
+
+	# fallback default values
+	switch name
+		when "pluginPath"
+			path.join(app.getPath("appData"), "..", "Local", "Roblox", "Plugins")
+		when "pmPath"
+			path.join(app.getPath("documents"), "ROBLOX", "RSync")
+		when "tempPath"
+			path.join(app.getPath("temp"), "RSync")
+
+setSetting = (name, value) ->
+	settings[name] = value
+	saveSettings()
+
+loadSettings = ->
+	unless fs.existsSync settingsPath
+		fs.writeFileSync settingsPath, "{}"
+	settings = require settingsPath
+
+saveSettings = ->
+	fs.writeFileSync settingsPath, JSON.stringify(settings)
+
 # Adds a command to the command list, and sends it if there is an available long-poll request. #
 addCommand = (type, data) ->
 	commands.push {type: type, data: data}
@@ -32,6 +58,8 @@ deleteFile = (guid, fileToo) ->
 		delete fileCache[fileCache[guid]]
 		delete fileCache[guid]
 
+loadSettings()
+
 # Create the web server. #
 server = express()
 # Use automatic json body parsing, with a size limit of 50mb. #
@@ -39,6 +67,7 @@ server.use bodyParser.json(limit: '50mb')
 
 # Endpoint is used to handeshake with the plugin and compare version information. #
 server.post "/new", (req, res) ->
+	loadSettings()
 	data = req.body
 
 	# Check if we've already seen this place name, and if so, clear all file watchers and caches for that place. #
@@ -51,6 +80,7 @@ server.post "/new", (req, res) ->
 	res.json 
 		status: "OK"
 		app: "RSync"
+		pm: getSetting 'pmPath'
 		version: VERSION
 		build: BUILD
 
@@ -112,11 +142,14 @@ server.post "/write/:action", (req, res) ->
 	# Build the filename. #
 	filename = "#{data.name}#{ext}#{fext}"	
 
-	# If persistent mode is enabled, use Documents for a save path. Otherwise, use a temporary folder. #
+	# If persistent mode is enabled, use pmPath for a save path. Otherwise, use tempPath. #
+	console.log data.temp
 	if data.temp
-		filepath = path.join(app.getPath("temp"), "RSync", data.place_name, data.path)
+		filepath = path.join(getSetting('tempPath'), data.place_name, data.path)
 	else
-		filepath = path.join(app.getPath("documents"), "ROBLOX", "RSync", data.place_name, data.path)
+		filepath = path.join(getSetting('pmPath'), data.place_name, data.path)
+
+	console.log filepath
 
 	file = path.join(filepath, filename)
 
@@ -183,3 +216,5 @@ module.exports =
 	listen: (port) ->
 		server.listen port
 	addCommand: addCommand
+	getSetting: getSetting
+	setSetting: setSetting
