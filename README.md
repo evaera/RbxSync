@@ -10,11 +10,9 @@ Available in the [releases section.](https://github.com/evaera/RSync/releases/la
 **Notice**: The executable will most likely cause Windows to alert you with a fullscreen SmartScreen warning because this file is not commonly downloaded. To run anyway, click *More info* then click *Run anyway*. If you're wary, you can build the plugin from the source with the instructions below.
 
 ## Installation 
-RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the plugin direcotry in your Studio settings, you will need to drag the RSync folder from `%localappdata%\Roblox\Plugins` to your configured plugins folder.)
+RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the ROBLOX Studio Plugin directory, you will need to configure this before using RSync)
 
 Files will open with your system default `.lua` editor.
-
-RSync is designed to work on Windows only.
 
 **Note**: If you already have Studio open when you run the application for the first time, you will need to restart Studio for the plugin to load.
 
@@ -24,7 +22,7 @@ By default, RSync will use a temporary folder, but using a persistent directory 
 
 This allows you to create a Git repository for all the scripts in your game super easily.
 
-To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RSync\<Place Name>`. 
+To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RSync\<Place Name>` by default, but this is configurable. 
 
 ![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 
@@ -79,25 +77,22 @@ Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`. In 
 - `server`: This mixin is automatically run at the start of every script running on the server.
 
 **To put a script in MoonScript mode**, there must be a StringValue named "MoonScript" inside of it. The plugin provides several shortcuts so you don't have to do this manually:
-- If you put `.moon` at the end of your script name (e.g. `KillScript.moon`, then press the *Open in Editor* button. It will remove the `.moon` from the name after it's created the value.
+- If you put `.moon` at the end of your script name (e.g. `KillScript.moon`, then press the *Open in Editor* button, it will remove the `.moon` from the name after it's created the value.
 - If the script source contains `m`, `moon`, or `moonscript` exactly, when you press the *Open in Editor* button, it will also put the script in MoonScript mode.
 - Use the hotkey `Ctrl+Alt+B` with a script selected.
 
 ## Building it yourself
-The ROBLOX Studio plugin must be built before RSync will work, **even for development**. The build script will automatically copy the information from `/src/config.json` into *plugin.moon*, so that it always stays up to date with the config info.
+Building RSync is made easy by using CoffeeScript's Cakefiles. The build script will automatically copy the information from `/src/config.json` into *plugin.moon*, so that it always stays up to date with the config info.
 
 ### Prerequisites 
 - `npm install -g electron-packager`
 - `npm install -g electron-prebuilt`
 - `npm install -g coffee-script`
 - You must have [`moonc`](http://moonscript.org/) in your PATH.
-
-### Building the Plugin
-Run `cake build:plugin`
+- Go to the `./src` directory and run `npm install` to install the dependencies
 
 ### Building and running the app for developmental testing
-Go to the `./src` directory and run `npm install` to install the dependencies
-Run `cake b && electron src`
+Run `cake b && electron src` from the directory that the Cakefile is in
 
 ### Building the entire app into executable
 Run `cake build:app`
