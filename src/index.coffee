@@ -149,6 +149,8 @@ ipcMain.on 'setSettingPath', (event, name) ->
 		if files?
 			httpServer.setSetting name, files[0]
 			win.webContents.send 'updatePaths'
+			if name is "pluginPath"
+				copyPlugin()
 
 ipcMain.on 'getPath', (event, name) ->
 	event.returnValue = httpServer.getSetting(name)
