@@ -60,7 +60,7 @@ h1, h2, h3, h4 {
 	}
 
 	#main-icons {
-		margin-top: 40px;
+		margin-top: 20px;
 		ul, li {
 			position: relative;
 			padding: 0;
@@ -84,13 +84,14 @@ h1, h2, h3, h4 {
 			position: absolute;
 			display: inline-block;
 			font-size: 14px;
+			z-index: 10000;
 			background: #c0392b;
 			text-align: center;
 			// height: 20px;
 			width: 100px;
 			padding: 4px 6px;
 			border-radius: 4px;
-			bottom: -30px;
+			top: -20px;
 			opacity: 0;
 			left: 50%;
 			transform: translateX(-50%);

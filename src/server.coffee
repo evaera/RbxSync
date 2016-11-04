@@ -16,6 +16,7 @@ lprequest 	= null
 fileCache 	= {}
 watchers 	= {}
 guidCache	= {}
+settingsLoaded = false
 
 settings = {}
 settingsPath = path.join app.getPath("userData"), "settings.json"
@@ -37,8 +38,15 @@ setSetting = (name, value) ->
 
 loadSettings = ->
 	unless fs.existsSync settingsPath
-		fs.writeFileSync settingsPath, "{}"
-	settings = require settingsPath
+		mkdirp app.getPath("userData"), ->
+			fs.writeFileSync settingsPath, "{}"
+			settings = require settingsPath
+			settingsLoaded = true
+	try
+		settings = require settingsPath
+		settingsLoaded = true
+	catch
+		settings = {}
 
 saveSettings = ->
 	fs.writeFileSync settingsPath, JSON.stringify(settings)
@@ -213,6 +221,7 @@ server.post "/write/:action", (req, res) ->
 	res.send "OK"
 
 module.exports = 
+	areSettingsReady: -> settingsLoaded
 	listen: (port) ->
 		server.listen port
 	addCommand: addCommand

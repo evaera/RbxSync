@@ -25,6 +25,7 @@ quitApp = ->
 
 # Copies the packaged plugin.lua file into Studio's default plugin directory. #
 copyPlugin = ->
+	console.log "Copying plugin, settings are #{if httpServer.areSettingsReady() then 'ready' else 'not ready'}"
 	filepath = path.join httpServer.getSetting('pluginPath'), "RSync"
 
 	mkdirp filepath, ->
