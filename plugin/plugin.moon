@@ -4,10 +4,11 @@ PORT=21496
 -- END AUTO CONFIG --
 
 -- Variable declarations --
-CoreGui          = game\GetService "CoreGui"
-HttpService      = game\GetService "HttpService"
-Selection        = game\GetService "Selection"
-UserInputService = game\GetService "UserInputService"
+CoreGui           = game\GetService "CoreGui"
+HttpService       = game\GetService "HttpService"
+ReplicatedStorage = game\GetService "ReplicatedStorage"
+Selection         = game\GetService "Selection"
+UserInputService  = game\GetService "UserInputService"
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName
@@ -20,18 +21,19 @@ temp        = true
 polling     = false
 failed      = 0
 
+
 mixinRequire = [=[local __RSMIXINS=require(game:GetService"ReplicatedStorage".Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n]=]
+mixinRequireOld = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 moonBoilerplate = [=[
 -- RSync Boilerplate --
 local function mixin(name, automatic)
-	local ReplicatedStorage = game:GetService"ReplicatedStorage"
-
 	if (not automatic) and (name == "autoload" or name == "client" or name == "server") then
 		error("RSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
 	end
 
+	local ReplicatedStorage = game:GetService"ReplicatedStorage"
 	if not ReplicatedStorage:FindFirstChild("Mixins") then
 		return
 	end
@@ -78,18 +80,20 @@ alert = (...) ->
 
 	Spawn ->
 		wait 5
-		-- If the alert is still the most recentl, hide it. 
+		-- If the alert is still the most recent, hide it. 
 		-- Otherwise, keep it open since another alert has been issued. --
 		if snapshot == alertActive
 			alertBox.Visible = false
 
 -- Takes the injected mixin code and reverts it back to special RSync syntax. --
 parseMixinsOut = (source) ->
-	return source unless game\GetService("ReplicatedStorage")\FindFirstChild("Mixins") and 
-		game\GetService("ReplicatedStorage").Mixins\IsA("ModuleScript")
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
 		source = source\sub(#mixinRequire + 1)
+	elseif source\sub(1, #mixinRequireOld) == mixinReqireOld
+		source = source\sub(#mixinRequireOld + 1)
 
 	source = source\gsub mixinStringPattern, "@(%1)"
 
@@ -97,8 +101,8 @@ parseMixinsOut = (source) ->
 
 -- Parses the special Mixin syntax and replaces it with the injected code. --
 parseMixinsIn = (source) ->
-	return source unless game\GetService("ReplicatedStorage")\FindFirstChild("Mixins") and 
-		game\GetService("ReplicatedStorage").Mixins\IsA("ModuleScript")
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\find "@%(([%w_]+)%)"
 		source = mixinRequire .. source
@@ -388,7 +392,7 @@ with alertBox = Instance.new "TextLabel"
 	.Size                   = UDim2.new 0, 300, 0, 50
 	.ZIndex                 = 10
 	.Font                   = "SourceSansLight"
-	.FontSize               = "Size24"
+	.TextSize               = 24
 	.Visible                = false
 	.TextWrapped            = true
 
@@ -401,7 +405,7 @@ if game.Name\match("Place[%d+]") and
 	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
 		-- Create the plugin toolbar and button. --
 		toolbar = plugin\CreateToolbar "RSync"
-		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
+		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "https://www.roblox.com/asset?id=478150446"
 
 		button.Click\connect doSelection
 
