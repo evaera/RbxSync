@@ -1,55 +1,32 @@
 -- BEGIN AUTO CONFIG --
-BUILD=11
-PORT=21496
+BUILD = [[ config:BUILD ]]
+PORT = [[ config:PORT ]]
+mixinRequire = [[ strings:mixinRequire ]]
+mixinRequireOld = [[ strings:mixinRequireOld ]]
+moonBoilerplate = [[ file:boilerplate.lua ]]
 -- END AUTO CONFIG --
 
 -- Variable declarations --
-UserInputService 	= game\GetService "UserInputService"
-HttpService 		= game\GetService "HttpService"
-CoreGui 			= game\GetService "CoreGui"
+CoreGui           = game\GetService "CoreGui"
+HttpService       = game\GetService "HttpService"
+ReplicatedStorage = game\GetService "ReplicatedStorage"
+Selection         = game\GetService "Selection"
+UserInputService  = game\GetService "UserInputService"
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName
 
-pmPath 		= "Documents\\ROBLOX\\RSync"
+pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
 sourceCache = {}
-gameGUID 	= HttpService\GenerateGUID!
-temp 		= true
-polling		= false
-failed		= 0
+gameGUID    = HttpService\GenerateGUID!
+temp        = true
+polling     = false
+failed      = 0
 
-mixinRequire = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
-moonBoilerplate = [=[
--- RSync Boilerplate --
-local function mixin(name, automatic)
-	if (not automatic) and (name == "autoload" or name == "client" or name == "server") then
-		error("RSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
-	end
-	
-	if not game.ReplicatedStorage:FindFirstChild("Mixins") then
-		return
-	end
 
-	if script.Name == "Mixins" and script.Parent == game.ReplicatedStorage then
-		return
-	end
-
-	local mixins = require(game.ReplicatedStorage.Mixins)
-
-	if type(mixins[name]) == "function" then
-		return mixins[name](name, script, getfenv(2))
-	else
-		return mixins[name]
-	end
-end
-
-mixin("autoload", true)
-mixin(game.Players.LocalPlayer and "client" or "server", true)
--- End Boilerplate --
-]=]
 -- A wrapper for `print` that prefixes plugin version information.--
 debug = (...) ->
 	print "[RSync build #{BUILD}] ", ...
@@ -75,18 +52,20 @@ alert = (...) ->
 
 	Spawn ->
 		wait 5
-		-- If the alert is still the most recentl, hide it. 
+		-- If the alert is still the most recent, hide it. 
 		-- Otherwise, keep it open since another alert has been issued. --
 		if snapshot == alertActive
 			alertBox.Visible = false
 
 -- Takes the injected mixin code and reverts it back to special RSync syntax. --
 parseMixinsOut = (source) ->
-	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
-		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
 		source = source\sub(#mixinRequire + 1)
+	elseif source\sub(1, #mixinRequireOld) == mixinReqireOld
+		source = source\sub(#mixinRequireOld + 1)
 
 	source = source\gsub mixinStringPattern, "@(%1)"
 
@@ -94,8 +73,8 @@ parseMixinsOut = (source) ->
 
 -- Parses the special Mixin syntax and replaces it with the injected code. --
 parseMixinsIn = (source) ->
-	return source unless game.ReplicatedStorage\FindFirstChild("Mixins") and 
-		game.ReplicatedStorage.Mixins\IsA("ModuleScript")
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\find "@%(([%w_]+)%)"
 		source = mixinRequire .. source
@@ -290,15 +269,16 @@ scan = ->
 				sendScript child, false
 			lookIn child
 
-	lookIn game.Workspace
-	lookIn game.Lighting
-	lookIn game.ReplicatedFirst
-	lookIn game.ReplicatedStorage
-	lookIn game.ServerScriptService
-	lookIn game.ServerStorage
-	lookIn game.StarterGui
-	lookIn game.StarterPack
-	lookIn game.StarterPlayer
+	lookIn game\GetService "Chat"
+	lookIn game\GetService "Lighting"
+	lookIn game\GetService "ReplicatedFirst"
+	lookIn game\GetService "ReplicatedStorage"
+	lookIn game\GetService "ServerScriptService"
+	lookIn game\GetService "ServerStorage"
+	lookIn game\GetService "StarterGui"
+	lookIn game\GetService "StarterPack"
+	lookIn game\GetService "StarterPlayer"
+	lookIn game\GetService "Workspace"
 
 	-- When a new script is added to the game, handle it correctly. --
 	game.DescendantAdded\connect (obj) ->
@@ -315,7 +295,7 @@ doSelection = ->
 	-- If the initial handshake hasn't been performed, do it first. --
 	return init doSelection unless polling
 
-	selection = game.Selection\Get!
+	selection = Selection\Get!
 
 	-- Check if selection is empty. --
 	if #selection == 0
@@ -373,20 +353,20 @@ checkForPlaceName = (obj) ->
 
 -- Create the alert box and place it in CoreGui. --
 with alertBox = Instance.new "TextLabel"
-	.Parent 				= Instance.new "ScreenGui", CoreGui
-	.Name 					= "RSync Alert"
-	.BackgroundColor3 		= Color3.new 231/255, 76/255, 60/255
-	.TextColor3				= Color3.new 1, 1, 1
-	.BackgroundTransparency	= 0
-	.BorderColor3 			= Color3.new 231/255, 76/255, 60/255
-	.BorderSizePixel 		= 30
-	.Position 				= UDim2.new 0.5, -150, 0.5, -25
-	.Size 					= UDim2.new 0, 300, 0, 50
-	.ZIndex 				= 10
-	.Font 					= "SourceSansLight"
-	.FontSize				= "Size24"
-	.Visible 				= false
-	.TextWrapped			= true
+	.Parent                 = Instance.new "ScreenGui", CoreGui
+	.Name                   = "RSync Alert"
+	.BackgroundColor3       = Color3.fromRGB 231, 76, 60
+	.TextColor3             = Color3.fromRGB 1, 1, 1
+	.BackgroundTransparency = 0
+	.BorderColor3           = Color3.fromRGB 231, 76, 60
+	.BorderSizePixel        = 30
+	.Position               = UDim2.new 0.5, -150, 0.5, -25
+	.Size                   = UDim2.new 0, 300, 0, 50
+	.ZIndex                 = 10
+	.Font                   = "SourceSansLight"
+	.TextSize               = 24
+	.Visible                = false
+	.TextWrapped            = true
 
 -- Check that the game is not in test mode before enabling the plugin. 
 -- This works because Studio names all edit-mode places in the format PlaceN, where N is a number.
@@ -397,7 +377,7 @@ if game.Name\match("Place[%d+]") and
 	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
 		-- Create the plugin toolbar and button. --
 		toolbar = plugin\CreateToolbar "RSync"
-		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "rbxassetid://478150446"
+		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "https://www.roblox.com/asset?id=478150446"
 
 		button.Click\connect doSelection
 
@@ -407,7 +387,7 @@ if game.Name\match("Place[%d+]") and
 
 			if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
 				if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
-					for obj in *game.Selection\Get!
+					for obj in *Selection\Get!
 						checkMoonHelper obj, true
 				
 				doSelection!

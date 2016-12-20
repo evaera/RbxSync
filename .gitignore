@@ -53,6 +53,8 @@ node_modules/
 *.sublime-workspace
 plugin/plugin.lua
 plugin/plugin.min.lua
+plugin/build/plugin.moon
+plugin/build/plugin.lua
 src/plugin.lua
 .sass-cache/
 
