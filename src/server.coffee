@@ -111,7 +111,7 @@ server.get "/poll", (req, res) ->
 				res.json({})
 		, 50000
 
-# Endpoint used to delete a script from our caches and the filesystem. 3
+# Endpoint used to delete a script from our caches and the filesystem. #
 server.post "/delete", (req, res) ->
 	data = req.body
 

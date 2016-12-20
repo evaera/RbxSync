@@ -82,7 +82,7 @@ Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`. In 
 - Use the hotkey `Ctrl+Alt+B` with a script selected.
 
 ## Building it yourself
-Building RSync is made easy by using CoffeeScript's Cakefiles. The build script will automatically copy the information from `/src/config.json` into *plugin.moon*, so that it always stays up to date with the config info.
+Building RSync is made easy by using CoffeeScript's Cakefiles. The build script will automatically replace the partial strings in `plugin.coffee` with the data from the `partials/` directory.
 
 ### Prerequisites 
 - `npm install -g electron-packager`
@@ -96,3 +96,6 @@ Run `cake b && electron src` from the directory that the Cakefile is in
 
 ### Building the entire app into executable
 Run `cake build:app`
+
+## TODO
+- Need to make the plugin work with multiple instances of Studio open, but this will probably require quite a bit of refactoring in `server.coffee`
