@@ -189,13 +189,17 @@ server.post "/write/:action", (req, res) ->
 		unless fileCache[file]
 			watchers[file] = fs.watch file, (type) ->
 				if type is "change"
+					try
+						fileSource = fs.readFileSync file, encoding: 'utf8'
+					catch error
+						return console.log error
+						
 					switch data.syntax
 						when "lua"
 							# Send a Lua script back to the plugin. #
 							addCommand "update", 
 								guid: data.guid
-								source: fs.readFileSync file, 
-									encoding: 'utf8'
+								source: fileSource
 						when "moon"
 							# Compiles MoonScript and sends it back to the plugin. #
 							exec "moonc -p \"#{file}\"", (err, stdout, stderr) ->
@@ -208,8 +212,7 @@ server.post "/write/:action", (req, res) ->
 									addCommand "update",
 										guid: data.guid
 										source: stdout
-										moon: fs.readFileSync file, 
-											encoding: 'utf8'
+										moon: fileSource
 
 		# Update our caches with new information about the file. #
 		fileCache[file] 		= data.guid
