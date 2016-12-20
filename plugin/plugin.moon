@@ -1,6 +1,9 @@
 -- BEGIN AUTO CONFIG --
-BUILD=12
-PORT=21496
+BUILD = [[ config:BUILD ]]
+PORT = [[ config:PORT ]]
+mixinRequire = [[ strings:mixinRequire ]]
+mixinRequireOld = [[ strings:mixinRequireOld ]]
+moonBoilerplate = [[ file:boilerplate.lua ]]
 -- END AUTO CONFIG --
 
 -- Variable declarations --
@@ -21,40 +24,9 @@ temp        = true
 polling     = false
 failed      = 0
 
-
-mixinRequire = [=[local __RSMIXINS=require(game:GetService"ReplicatedStorage".Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n]=]
-mixinRequireOld = "local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end\n"
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
-moonBoilerplate = [=[
--- RSync Boilerplate --
-local function mixin(name, automatic)
-	if (not automatic) and (name == "autoload" or name == "client" or name == "server") then
-		error("RSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
-	end
 
-	local ReplicatedStorage = game:GetService"ReplicatedStorage"
-	if not ReplicatedStorage:FindFirstChild("Mixins") then
-		return
-	end
-
-	if script.Name == "Mixins" and script.Parent == ReplicatedStorage then
-		return
-	end
-
-	local mixins = require(ReplicatedStorage.Mixins)
-
-	if type(mixins[name]) == "function" then
-		return mixins[name](name, script, getfenv(2))
-	else
-		return mixins[name]
-	end
-end
-
-mixin("autoload", true)
-mixin(game:GetService"Players".LocalPlayer and "client" or "server", true)
--- End Boilerplate --
-]=]
 -- A wrapper for `print` that prefixes plugin version information.--
 debug = (...) ->
 	print "[RSync build #{BUILD}] ", ...
