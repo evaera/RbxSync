@@ -388,6 +388,7 @@ if game.Name\match("Place[%d+]") and
 				
 				doSelection!
 
+		-- Check if we should turn persistent mode on. --
 		for obj in *HttpService\GetChildren!
 			placeNameAdded obj
 			
