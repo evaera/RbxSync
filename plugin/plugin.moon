@@ -334,14 +334,14 @@ checkMoonHelper = (obj, force) ->
 -- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
 	-- If the object meets the requirements, enable persistent mode. -- 
-	if #obj.Value > 0
+	if obj.Name == "PlaceName" and #obj.Value > 0
 		resetCache!
 		gameGUID = obj.Value
 		temp = false
 		scan!
 
 placeNameAdded = (obj) ->
-	if obj.Name == "PlaceName" and obj\IsA("StringValue")
+	if obj\IsA("StringValue")
 		checkForPlaceName obj
 		-- Wait for any changes to `PlaceName` in HttpService
 		obj.Changed\connect ->
