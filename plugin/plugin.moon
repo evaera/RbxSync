@@ -387,11 +387,8 @@ if game.Name\match("Place[%d+]") and
 						checkMoonHelper obj, true
 				
 				doSelection!
-							
-		-- Check if we should turn persistent mode on. --
-		obj = HttpService\FindFirstChild("PlaceName")
+
+		for obj in *HttpService\GetChildren!
+			placeNameAdded obj
 			
 		HttpService.ChildAdded\connect placeNameAdded
-
-		if obj
-			placeNameAdded obj
