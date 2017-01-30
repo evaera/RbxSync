@@ -14,7 +14,7 @@ Selection         = game\GetService "Selection"
 UserInputService  = game\GetService "UserInputService"
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
-local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName
+local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
 
 pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
@@ -333,23 +333,19 @@ checkMoonHelper = (obj, force) ->
 
 -- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
-	-- If obj is nil, try to find it. If it is nil, return. --
-	unless obj
-		if HttpService\FindFirstChild "PlaceName"
-			obj = HttpService.PlaceName
-
-	return unless obj
-
-	-- Wait for any changes to objects in HttpService.
-	obj.Changed\connect ->
-		checkForPlaceName obj
-
 	-- If the object meets the requirements, enable persistent mode. -- 
-	if obj\IsA("StringValue") and #obj.Value > 0
+	if obj.Name == "PlaceName" and #obj.Value > 0
 		resetCache!
 		gameGUID = obj.Value
 		temp = false
 		scan!
+
+placeNameAdded = (obj) ->
+	if obj\IsA("StringValue")
+		checkForPlaceName obj
+		-- Wait for any changes to `PlaceName` in HttpService
+		obj.Changed\connect ->
+			checkForPlaceName obj
 
 -- Create the alert box and place it in CoreGui. --
 with alertBox = Instance.new "TextLabel"
@@ -393,5 +389,7 @@ if game.Name\match("Place[%d+]") and
 				doSelection!
 
 		-- Check if we should turn persistent mode on. --
-		checkForPlaceName!
-		HttpService.ChildAdded\connect checkForPlaceName
+		for obj in *HttpService\GetChildren!
+			placeNameAdded obj
+			
+		HttpService.ChildAdded\connect placeNameAdded
