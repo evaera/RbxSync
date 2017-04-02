@@ -1,16 +1,16 @@
-# RSync - Third party IDE support for ROBLOX Studio in one click
-RSync is an open source ROBLOX plugin that easily integrates any third-party code editor or IDE, such as Sublime Text, Notepad++, VS Code, or Atom, into ROBLOX Studio. This is accomplished via a helper application which runs in the tray and acts as a middle man between your code editor of choice and ROBLOX Studio. 
+# RbxSync - Third party IDE support for ROBLOX Studio in one click
+RbxSync is an open source ROBLOX plugin that easily integrates any third-party code editor or IDE, such as Sublime Text, Notepad++, VS Code, or Atom, into ROBLOX Studio. This is accomplished via a helper application which runs in the tray and acts as a middle man between your code editor of choice and ROBLOX Studio. 
 
 ![Tray example](https://i.imgur.com/lqhr2sx.png)
 ![Demo Gif](https://i.imgur.com/z9oeWaF.gif)
 
 ## Download
-Available in the [releases section.](https://github.com/evaera/RSync/releases/latest)
+Available in the [releases section.](https://github.com/evaera/RbxSync/releases/latest)
 
 **Notice**: The executable will most likely cause Windows to alert you with a fullscreen SmartScreen warning because this file is not commonly downloaded. To run anyway, click *More info* then click *Run anyway*. If you're wary, you can build the plugin from the source with the instructions below.
 
 ## Installation 
-RSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the ROBLOX Studio Plugin directory, you will need to configure this before using RSync)
+RbxSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the ROBLOX Studio Plugin directory, you will need to configure this before using RbxSync)
 
 Files will open with your system default `.lua` editor.
 
@@ -18,11 +18,11 @@ Files will open with your system default `.lua` editor.
 
 ## Features
 ### Persistent Mode / Git Mode
-By default, RSync will use a temporary folder, but using a persistent directory is also supported. This will cause the plugin to write *all* scripts to disk (nested with folders that match in-game hierarchy), even ones you don't explicitly open. The plugin will keep the scripts up to date on disk, even through `Parent` or `Name` changes. If you delete the script from your game, it will also be deleted on disk. If two objects have the same name and parent, one of them will be appended with `(2)` at the end of its name. Try to avoid this.
+By default, RbxSync will use a temporary folder, but using a persistent directory is also supported. This will cause the plugin to write *all* scripts to disk (nested with folders that match in-game hierarchy), even ones you don't explicitly open. The plugin will keep the scripts up to date on disk, even through `Parent` or `Name` changes. If you delete the script from your game, it will also be deleted on disk. If two objects have the same name and parent, one of them will be appended with `(2)` at the end of its name. Try to avoid this.
 
 This allows you to create a Git repository for all the scripts in your game super easily.
 
-To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RSync\<Place Name>` by default, but this is configurable. 
+To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RbxSync\<Place Name>` by default, but this is configurable. 
 
 ![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 
@@ -68,7 +68,7 @@ print(__RSMIXIN('hello', script, getfenv()))
 ```
 
 ### MoonScript Support
-If you have MoonScript installed on your computer (have [`moonc`](http://moonscript.org/) in your PATH), RSync can automatically compile your scripts into Lua every time you save them and instantly push them to your game in Studio.
+If you have MoonScript installed on your computer (have [`moonc`](http://moonscript.org/) in your PATH), RbxSync can automatically compile your scripts into Lua every time you save them and instantly push them to your game in Studio.
 
 Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`. In MoonScript mode only, there are three special mixin names, which can be used to inject things into the environment:
 
@@ -82,7 +82,7 @@ Mixins can be used with the built-in `mixin` function, e.g. `mixin "hello"`. In 
 - Use the hotkey `Ctrl+Alt+B` with a script selected.
 
 ## Building it yourself
-Building RSync is made easy by using CoffeeScript's Cakefiles. The build script will automatically replace the partial strings in `plugin.coffee` with the data from the `partials/` directory.
+Building RbxSync is made easy by using CoffeeScript's Cakefiles. The build script will automatically replace the partial strings in `plugin.coffee` with the data from the `partials/` directory.
 
 ### Prerequisites 
 - `npm install -g electron-packager`
