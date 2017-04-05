@@ -1,6 +1,8 @@
 # RbxSync - Third party IDE support for ROBLOX Studio in one click
 RbxSync is an open source ROBLOX plugin that easily integrates any third-party code editor or IDE, such as Sublime Text, Notepad++, VS Code, or Atom, into ROBLOX Studio. This is accomplished via a helper application which runs in the tray and acts as a middle man between your code editor of choice and ROBLOX Studio. 
 
+[![Patreon](http://i.imgur.com/dujYlAK.png)](https://www.patreon.com/erynlynn)
+
 ![Tray example](https://i.imgur.com/lqhr2sx.png)
 ![Demo Gif](https://i.imgur.com/z9oeWaF.gif)
 
