@@ -188,7 +188,9 @@ startPoll = ->
 	polling = true
 
 	Spawn ->
-		while true
+		-- Waiting here prevents most connection loses
+		-- If polling returns immediatly, it would do 400 requests per minute
+		while wait 0.14 
 			success = pcall ->
 				body = HttpService\GetAsync "http://localhost:#{PORT}/poll", true
 				command = HttpService\JSONDecode body
