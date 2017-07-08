@@ -81,7 +81,7 @@ app.on 'ready', ->
 				quitApp()
 		
 	# Create the tray icon and context menu. #
-	tray = new Tray path.join(__dirname, "icon.ico")
+	tray = new Tray path.join(__dirname, "icon.png")
 
 	tray.setToolTip "RSync Helper"
 
@@ -110,7 +110,7 @@ app.on 'ready', ->
 		win.show() if win?
 
 	win = new BrowserWindow
-		icon: path.join __dirname, "icon.ico"
+		icon: path.join __dirname, "icon.png"
 		height: 400
 		width: 350
 		resizable: false
