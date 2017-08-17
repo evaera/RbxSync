@@ -367,10 +367,10 @@ with alertBox = Instance.new "TextLabel"
 	.TextWrapped            = true
 
 -- Check that the game is not in test mode before enabling the plugin. 
--- This works because Studio names all edit-mode places in the format PlaceN, where N is a number.
--- All places in test mode either take the name of the file or the name of the place online.
--- This obviously won't work in all cases, but it should work with the majority of cases. --
-if game.Name\match("Place[%d+]") and
+-- After starting a test mode, checking immediately for IsRunning sometimes fails.
+-- Waiting at least until after the first heartbeat before checking IsRunning seems to be reliable.
+game\GetService("RunService").Heartbeat\Wait!
+if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService")\IsRunning!) and
 	-- Studio mode is both server and client. If not both, then user is testing in server/client mode. --
 	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
 		-- Create the plugin toolbar and button. --
