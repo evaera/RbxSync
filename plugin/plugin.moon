@@ -368,8 +368,14 @@ with alertBox = Instance.new "TextLabel"
 
 -- Check that the game is not in test mode before enabling the plugin. 
 -- After starting a test mode, checking immediately for IsRunning sometimes fails.
--- Waiting at least until after the first heartbeat before checking IsRunning seems to be reliable.
+-- Roblox seems to be doing more work at the start of a game than previously. 
+-- Before checking IsRunning, wait at least until after the first heartbeat then
+-- an additional half second to account for the additional work. It'd be even
+-- better to locate some consistent status indicator that Roblox's initialization
+-- code has completed and use that here instead of waiting an arbitrary length of
+-- time.
 game\GetService("RunService").Heartbeat\Wait!
+wait 0.5
 if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService")\IsRunning!) and
 	-- Studio mode is both server and client. If not both, then user is testing in server/client mode. --
 	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
