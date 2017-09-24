@@ -1,0 +1,49 @@
+.drag {
+	-webkit-app-region: drag;
+}
+
+.collapsible-header {
+	font-size: 16px;
+}
+
+nav {
+	position: fixed;
+	top: 0;
+	z-index: 99;
+}
+
+.nav-push {
+	height: 56px;
+}
+
+h5 {
+	margin-bottom: 30px;
+}
+
+.muted {
+	color: #aaa;
+	font-size: 12px;
+}
+
+label {
+	color: #444;
+}
+
+#close-button {
+	position: absolute;
+	top: 16px;
+	right: 16px;
+	z-index: 99999;
+	cursor: pointer;
+}
+
+.icon-button {
+	opacity: 0.6;
+	cursor: pointer;
+	transition: all 250ms ease;
+	-webkit-app-region: no-drag;
+
+	&:hover {
+		opacity: 1;
+	}
+}

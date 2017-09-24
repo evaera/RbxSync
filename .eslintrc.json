@@ -1,0 +1,57 @@
+{
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "rules": {
+        "indent": [
+            "error",
+            "tab",
+            {
+                "SwitchCase": 1
+            }
+        ],
+        "linebreak-style": [
+            "off",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "single"
+        ],
+        "semi": [
+            "error",
+            "always"
+        ],
+        "radix": "error",
+        "getter-return": "error",
+        "no-console": "off",
+        "for-direction": "error",
+        "require-await": "error",
+        "yoda": "error",
+        "strict": "error",
+        "vars-on-top": "error",
+        "no-return-assign": "error",
+        "class-methods-use-this": "warn",
+        "dot-notation": "error",
+        "eqeqeq": "warn",
+        "no-with": "error",
+        "global-require": "error",
+        "no-path-concat": "error",
+        "no-sync": "error",
+        "camelcase": "warn",
+        "no-useless-concat": "error",
+        "brace-style": "error",
+        "space-before-blocks": "error",
+        "valid-jsdoc": [
+            "error",
+            {
+                "requireReturn": false
+            }
+        ]
+    },
+    "parserOptions": {
+        "ecmaVersion": 8
+    }
+}

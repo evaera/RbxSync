@@ -1,3 +1,6 @@
+'use strict';
+
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('./config');
@@ -8,20 +11,24 @@ let http = express();
 http.use(bodyParser.json({ limit: '50mb' }));
 
 http.get('/new', (req, res) => {
-    let place = new Place();
-    res.status(201).send(place.id).end();
+	console.log(req.originalUrl);
+	let place = new Place();
+	res.status(201).send({ status: 'OK', build: config.BUILD, placeId: place.id }).end();
 });
 
 http.get('/get/:id', (req, res) => {
-    let place = Place.getPlace(req.params.id);
-    place.setResponse(res);
+	console.log(req.originalUrl);
+	let place = Place.getPlace(req.params.id);
+	place.setResponse(res);
 });
 
 http.post('/delete/:id', (req, res) => {
-    
+	console.log(req.originalUrl);
+	
 });
 
-http.post('/write/:id/:action', (req, res) => {
+http.post('/write/:action/:id', (req, res) => {
+	console.log(req.originalUrl);
 
 });
 

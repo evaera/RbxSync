@@ -1,5 +1,6 @@
 {
     "PORT": 21496,
     "BUILD": 100,
-    "VERSION": "2.0.0"
+    "VERSION": "2.0.0",
+    "REPOSITORY": "https://github.com/evaera/RbxSync"
 }
