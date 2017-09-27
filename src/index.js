@@ -3,4 +3,4 @@
 require('./Server')
 const App = require('./App')
 
-new App()
+global.App = new App()
