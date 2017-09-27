@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 
-require('./Server');
-const App = require('./App');
+require('./Server')
+const App = require('./App')
 
-new App();
+new App()
