@@ -376,11 +376,9 @@ with alertBox = Instance.new "TextLabel"
 -- time.
 game\GetService("RunService").Heartbeat\Wait!
 wait 0.5
-if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService")\IsRunning!) and
-	-- Studio mode is both server and client. If not both, then user is testing in server/client mode. --
-	(game\GetService("RunService")\IsClient! and game\GetService("RunService")\IsServer!)
+if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService")\IsRunning!) and (game\GetService("RunService")\IsClient!)
 		-- Create the plugin toolbar and button. --
-		toolbar = plugin\CreateToolbar "RSync"
+		toolbar = plugin\CreateToolbar "RbxSync"
 		button = toolbar\CreateButton "Open with Editor", "Open with system .lua editor (Ctrl+B)", "https://www.roblox.com/asset?id=478150446"
 
 		button.Click\connect doSelection
