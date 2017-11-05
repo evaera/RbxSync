@@ -9,7 +9,8 @@ const assets = {
   ICON: path.join(__dirname, '..', 'assets', 'icon.png'),
   ICO: path.join(__dirname, '..', 'assets', 'icon.ico'),
   APP: path.join(__dirname, '..', 'app', 'index.html'),
-  PLACE: path.join(__dirname, '..', 'app', 'place.html')
+  PLACE: path.join(__dirname, '..', 'app', 'place.html'),
+  WARNING: path.join(__dirname, '..', 'app', 'warning.html')
 }
 
 class App {
@@ -23,7 +24,8 @@ class App {
     app.on('ready', () => {
       this.initTray()
       // This.initWindow();
-      this.initSettingsWindow()
+      // this.initSettingsWindow()
+      this.initWarningWindow()
       this.checkForUpdate()
     })
 
@@ -85,6 +87,31 @@ class App {
     this.settingsWindow.loadURL(`file:///${assets.PLACE}`)
   }
 
+  initWarningWindow () {
+    let bounds = require('electron').screen.getPrimaryDisplay().bounds
+    this.warningWindow = new BrowserWindow({
+      icon: assets.ICON,
+      height: 50,
+      width: 1000,
+      x: bounds.x + ((bounds.width - 1000) / 2),
+      y: 0,
+      resizable: false,
+      autoHideMenuBar: true,
+      title: 'Syntax Error',
+      backgroundColor: '#e74c3c',
+      frame: false,
+      fullscreenable: false,
+      transparent: true,
+      alwaysOnTop: true,
+      focusable: true,
+      skipTaskbar: true
+    })
+
+    this.warningWindow.once('ready-to-show', () => this.warningWindow.show())
+
+    this.warningWindow.loadURL(`file:///${assets.WARNING}`)
+  }
+
   initTray () {
     this.trayMenu = Menu.buildFromTemplate([
       { label: `RbxSync version ${config.VERSION} release ${config.BUILD}`, enabled: false },
@@ -94,7 +121,7 @@ class App {
       { label: 'Quit', click: () => this.quit() }
     ])
 
-    this.tray = new Tray(assets.ICO)
+    this.tray = new Tray(assets.ICON)
     this.tray.setContextMenu(this.trayMenu)
     this.tray.setToolTip('RbxSync Helper')
 

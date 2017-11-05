@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Syntax Error</title>
+		<style>
+			@font-face {
+				font-family: "Roboto";
+				src: local(Roboto Thin),
+					url("./fonts/roboto/Roboto-Thin.woff2") format("woff2"),
+					url("./fonts/roboto/Roboto-Thin.woff") format("woff");
+
+				font-weight: 100;
+			}
+			@font-face {
+				font-family: "Roboto";
+				src: local(Roboto Light),
+					url("./fonts/roboto/Roboto-Light.woff2") format("woff2"),
+					url("./fonts/roboto/Roboto-Light.woff") format("woff");
+				font-weight: 300;
+			}
+
+			@font-face {
+				font-family: "Roboto";
+				src: local(Roboto Regular),
+					url("./fonts/roboto/Roboto-Regular.woff2") format("woff2"),
+					url("./fonts/roboto/Roboto-Regular.woff") format("woff");
+				font-weight: 400;
+			}
+
+			@font-face {
+				font-family: "Roboto";
+				src: local(Roboto Medium),
+					url("./fonts/roboto/Roboto-Medium.woff2") format("woff2"),
+					url("./fonts/roboto/Roboto-Medium.woff") format("woff");
+				font-weight: 500;
+			}
+
+			@font-face {
+				font-family: "Roboto";
+				src: local(Roboto Bold),
+					url("./fonts/roboto/Roboto-Bold.woff2") format("woff2"),
+					url("./fonts/roboto/Roboto-Bold.woff") format("woff");
+				font-weight: 700;
+			}
+
+			body {
+				background: #e74c3c;
+				font-family: "Roboto";
+				color: white;
+				font-weight: 300;
+				-webkit-app-region: drag;
+			}
+
+			strong {
+				font-weight: 500;
+			}
+
+			html, body {
+				height: 100%;
+				padding: 0;
+				margin: 0;
+			}
+
+			.center {
+				line-height: 50px;
+				padding: 0 15px;
+			}
+
+			#close-button {
+				position: absolute;
+				top: 13px;
+				right: 16px;
+				z-index: 99999;
+				cursor: pointer;
+			}
+
+			.icon-button {
+				opacity: 0.6;
+				cursor: pointer;
+				transition: all 250ms ease;
+				-webkit-app-region: no-drag;
+			}
+
+			.icon-button:hover {
+				opacity: 1;
+			}
+		</style>
+	</head>
+	<body>
+		<img src="icons/close.svg" id="close-button" class="icon-button" onclick="window.close()" />
+		<div class="center">
+			<strong>Syntax Error</strong> <span id="error">Script.lua: 40:24 Expected "end" but saw eof.</span>
+		</div>
+	</body>
+</html>
