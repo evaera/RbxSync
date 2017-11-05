@@ -1,7 +1,7 @@
 -- RSync Boilerplate --
 local function mixin(name, automatic)
 	if (not automatic) and (name == "autoload" or name == "client" or name == "server") then
-		error("RSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
+		error("RbxSync: Name \"" .. name .. "\" is a reserved name, and is automatically included in every applicable script.")
 	end
 
 	local ReplicatedStorage = game:GetService"ReplicatedStorage"

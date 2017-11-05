@@ -24,7 +24,7 @@ By default, RbxSync will use a temporary folder, but using a persistent director
 
 This allows you to create a Git repository for all the scripts in your game super easily.
 
-To enable this feature, create a `StringValue` in `HttpService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RbxSync\<Place Name>` by default, but this is configurable. 
+To enable this feature, create a `StringValue` in `ServerScriptService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RbxSync\<Place Name>` by default, but this is configurable. 
 
 ![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 

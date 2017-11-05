@@ -34,7 +34,7 @@ copyPlugin = ->
 
 # Checks for an update in the GitHub repository. #
 checkForUpdate = (menu) ->
-	request.get "https://raw.githubusercontent.com/evaera/RSync/master/src/config.json", (err, res, body) ->
+	request.get "https://raw.githubusercontent.com/evaera/RbxSync/master/src/config.json", (err, res, body) ->
 		return if err
 
 		try
@@ -52,14 +52,14 @@ checkForUpdate = (menu) ->
 			menu.insert 0, new MenuItem({
 				label: "Download New Update...",
 				click: ->
-					shell.openExternal "https://github.com/evaera/RSync/releases"
+					shell.openExternal "https://github.com/evaera/RbxSync/releases"
 			})
 
 			win.webContents.send 'updateAvailable'
 
 			# Display a notification that there is an update. #
 			tray.displayBalloon 
-				title: "A new update for RSync is available."
+				title: "A new update for RbxSync is available."
 				content: "Right-click on the tray icon to download the new update."
 
 # Called when the electron application is ready. #
@@ -75,7 +75,7 @@ app.on 'ready', ->
 			dialog.showMessageBox
 				type: "warning"
 				title: " "
-				message: "It appears that another instance of RSync is already running. (port #{PORT})"
+				message: "It appears that another instance of RbxSync is already running. (port #{PORT})"
 				buttons: []
 			, ->
 				quitApp()
@@ -83,17 +83,17 @@ app.on 'ready', ->
 	# Create the tray icon and context menu. #
 	tray = new Tray path.join(__dirname, "icon.png")
 
-	tray.setToolTip "RSync Helper"
+	tray.setToolTip "RbxSync Helper"
 
 	menu = Menu.buildFromTemplate [
 		{
-			label: "RSync version #{VERSION} build #{BUILD}"
+			label: "RbxSync version #{VERSION} build #{BUILD}"
 			enabled: false
 		}
 		{
-			label: "About RSync..."
+			label: "About RbxSync..."
 			click: ->
-				shell.openExternal "https://github.com/evaera/RSync"
+				shell.openExternal "https://github.com/evaera/RbxSync"
 		}
 		{
 			type: "separator"
@@ -115,7 +115,7 @@ app.on 'ready', ->
 		width: 350
 		resizable: false
 		autoHideMenuBar: true
-		title: "RSync"
+		title: "RbxSync"
 		backgroundColor: "#e74c3c"
 		frame: false
 		fullscreenable: false
@@ -138,7 +138,7 @@ ipcMain.on 'quit', () ->
 	quitApp()
 	
 ipcMain.on 'update', ->
-	shell.openExternal "https://github.com/evaera/RSync/releases"
+	shell.openExternal "https://github.com/evaera/RbxSync/releases"
 	quitApp()
 
 ipcMain.on 'setSettingPath', (event, name) ->

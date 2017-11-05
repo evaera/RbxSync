@@ -30,7 +30,7 @@ mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 
 -- A wrapper for `print` that prefixes plugin version information.--
 debug = (...) ->
-	print "[RSync build #{BUILD}] ", ...
+	print "[RbxSync build #{BUILD}] ", ...
 
 -- Creates a GUI alert to tell the user something, 
 -- also calls `debug` on the arguments. --
@@ -58,7 +58,7 @@ alert = (...) ->
 		if snapshot == alertActive
 			alertBox.Visible = false
 
--- Takes the injected mixin code and reverts it back to special RSync syntax. --
+-- Takes the injected mixin code and reverts it back to special RbxSync syntax. --
 parseMixinsOut = (source) ->
 	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
 		ReplicatedStorage.Mixins\IsA("ModuleScript")
@@ -357,7 +357,7 @@ placeNameAddedHttp = (obj) ->
 -- Create the alert box and place it in CoreGui. --
 with alertBox = Instance.new "TextLabel"
 	.Parent                 = Instance.new "ScreenGui", CoreGui
-	.Name                   = "RSync Alert"
+	.Name                   = "RbxSync Alert"
 	.BackgroundColor3       = Color3.fromRGB 231, 76, 60
 	.TextColor3             = Color3.fromRGB 1, 1, 1
 	.BackgroundTransparency = 0
