@@ -7,11 +7,12 @@ moonBoilerplate = [[ file:boilerplate.lua ]]
 -- END AUTO CONFIG --
 
 -- Variable declarations --
-CoreGui           = game\GetService "CoreGui"
-HttpService       = game\GetService "HttpService"
-ReplicatedStorage = game\GetService "ReplicatedStorage"
-Selection         = game\GetService "Selection"
-UserInputService  = game\GetService "UserInputService"
+CoreGui             = game\GetService "CoreGui"
+HttpService         = game\GetService "HttpService"
+ServerScriptService = game\GetService "ServerScriptService"
+ReplicatedStorage   = game\GetService "ReplicatedStorage"
+Selection           = game\GetService "Selection"
+UserInputService    = game\GetService "UserInputService"
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
@@ -349,6 +350,10 @@ placeNameAdded = (obj) ->
 		obj.Changed\connect ->
 			checkForPlaceName obj
 
+placeNameAddedHttp = (obj) ->
+	if obj\IsA("StringValue") and obj.Name == "PlaceName"
+		obj.Parent = ServerScriptService
+
 -- Create the alert box and place it in CoreGui. --
 with alertBox = Instance.new "TextLabel"
 	.Parent                 = Instance.new "ScreenGui", CoreGui
@@ -395,7 +400,12 @@ if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService"
 				doSelection!
 
 		-- Check if we should turn persistent mode on. --
-		for obj in *HttpService\GetChildren!
+		for obj in *ServerScriptService\GetChildren!
 			placeNameAdded obj
+			
+		ServerScriptService.ChildAdded\connect placeNameAdded
+
+		for obj in *HttpService\GetChildren!
+			placeNameAddedHttp obj
 			
 		HttpService.ChildAdded\connect placeNameAdded
