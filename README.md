@@ -26,7 +26,7 @@ This allows you to create a Git repository for all the scripts in your game supe
 
 To enable this feature, create a `StringValue` in `ServerScriptService` named `PlaceName`, and then set the value to the name you'd like the folder to use. The scripts will then be written to `C:\Users\<Current User>\Documents\ROBLOX\RbxSync\<Place Name>` by default, but this is configurable. 
 
-![PMode Demo](http://i.imgur.com/3U2x9xr.png)
+![PMode Demo](https://i.imgur.com/FsNBKK6.png)
 
 ### Mixins (DEPRECATED)
 **!! Mixins are deprecated as of v1.3.4 and support for this special syntax will be dropped in version 2 (coming 2018). Code created with mixins will continue to work after support is dropped, but they will no longer be parsed into the @(...) syntax.**
