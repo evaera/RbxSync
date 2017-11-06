@@ -90,7 +90,7 @@ Building RbxSync is made easy by using CoffeeScript's Cakefiles. The build scrip
 
 ### Prerequisites 
 - `npm install -g electron-packager`
-- `npm install -g electron-prebuilt`
+- `npm install -g electron`
 - `npm install -g coffee-script`
 - You must have [`moonc`](http://moonscript.org/) in your PATH.
 - Go to the `./src` directory and run `npm install` to install the dependencies
