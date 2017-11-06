@@ -62,7 +62,7 @@ print(@(hello))
 This actually compiles to:
 
 ```lua
-local __RSMIXINS=require(game.ReplicatedStorage.Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end
+local __RSMIXINS=require(game:GetService"ReplicatedStorage".Mixins);__RSMIXIN=function(a,b,c)if type(__RSMIXINS[a])=='function'then return __RSMIXINS[a](a,b,c)else return __RSMIXINS[a]end end
 
 __RSMIXIN('require_all_children', script, getfenv())
 
