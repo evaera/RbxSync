@@ -28,7 +28,9 @@ To enable this feature, create a `StringValue` in `ServerScriptService` named `P
 
 ![PMode Demo](http://i.imgur.com/3U2x9xr.png)
 
-### Mixins
+### Mixins (DEPRECATED)
+**!! Mixins are deprecated as of v1.3.4 and support for this special syntax will be dropped in version 2 (coming 2018). Code created with mixins will continue to work after support is dropped, but they will no longer be parsed into the @(...) syntax.**
+
 Mixins allow you to use the syntax `@(mixin_name)` in your scripts, which will return any values you set in the Mixins module. To use this feature, create a *ModuleScript* in *ReplicatedStorage* named `Mixins`. 
 
 The module should return a table with string indexes for your mixin names. The values can be any type, but if they are a function, the function will be executed, given the arguments `(mixin_name, script, function_environment)`. 
