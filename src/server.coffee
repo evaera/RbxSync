@@ -165,14 +165,14 @@ server.post "/write/:action", (req, res) ->
 	# file extension, incrementing for each duplicate file found. #
 	unless fileCache[file] is data.guid
 		while fileCache[file]
-			matches = /\(([0-9]+)\)\.lua$/.exec file
+			matches = new RegExp("^\\(([0-9]+)\\)\\.#{ext}$").exec file
 			num = matches[1] if matches? and matches[1]?
 			if num?
 				num = parseInt num, 10
 				num += 1
-				file = path.join filepath, "#{data.name}#{ext} (#{num}).lua"
+				file = path.join filepath, "#{data.name}#{ext} (#{num}).#{ext}"
 			else
-				file = path.join filepath, "#{data.name}#{ext} (2).lua"
+				file = path.join filepath, "#{data.name}#{ext} (2).#{ext}"
 
 			if fileCache[file] is data.guid
 				break
