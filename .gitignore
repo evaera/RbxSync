@@ -63,3 +63,4 @@ src/index.js
 src/server.js
 src/app/style.css
 src/app/ui.js
+src/lang/**/*.js
