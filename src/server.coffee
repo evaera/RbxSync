@@ -34,6 +34,8 @@ getSetting = (name) ->
 			path.join(app.getPath("documents"), "ROBLOX", "RSync")
 		when "tempPath"
 			path.join(app.getPath("temp"), "RSync")
+		when "langPath"
+			path.join(app.getPath("documents"), "ROBLOX", "RbxSyncLanguages")
 
 setSetting = (name, value) ->
 	settings[name] = value
@@ -69,11 +71,14 @@ deleteFile = (guid, fileToo) ->
 		delete fileCache[fileCache[guid]]
 		delete fileCache[guid]
 
+reloadLangs = ->
+	languageService.reloadLanguages getSetting 'langPath'
+
 loadSettings()
 
 languageService = new LanguageService()
 languageService.languages.subscribe (langs) -> languages = langs
-languageService.reloadLanguages('.')
+reloadLangs()
 
 # Create the web server. #
 server = express()
@@ -215,3 +220,4 @@ module.exports =
 	addCommand: addCommand
 	getSetting: getSetting
 	setSetting: setSetting
+	reloadLangs: reloadLangs

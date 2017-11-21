@@ -5,6 +5,7 @@
 	<link href="style.css" rel="stylesheet" type="text/css" />
 	<link href="waves.min.css" rel="stylesheet" type="text/css" />
 	<link href="animate.css" rel="stylesheet" type="text/css" />
+	<link href="jquery.scrollbar.css" rel="stylesheet" type="text/css" />
 	<script src="jquery.js"></script>
 	<script>
 	    try {
@@ -20,7 +21,7 @@
 	<div id="drag"></div>
 	<img src="icons/close.svg" id="close-button" class="icon-button" onclick="window.close()" />
 
-	
+
 	<div id="home" class="center splash">
 		<div class="animated zoomIn">
 			<img src="icon.png" class="logo" />
@@ -56,21 +57,32 @@
 	<div id="settings" class="animated zoomInRight">
 		<img src="icons/back.svg" id="back-button" class="icon-button" onclick="home()" />
 		<img src="icon.png" class="logo" />
-		<div class="container">
-			<div class="setting">
-				<h4>ROBLOX Studio Plugin Folder Path</h4>
-				<span id="plugin-path-text" class="filepath"></span>
-				<button onclick="choosePluginPath()" class="waves">Change Folder</button>
-			</div>
-			<div class="setting">
-				<h4>Persistent Mode Path</h4>
-				<span id="pm-path-text" class="filepath"></span>
-				<button onclick="choosePmPath()" class="waves">Change Folder</button>
+		<div class="container-spacing">
+			<div class="container">
+				<div class="setting">
+					<h4>ROBLOX Studio Plugin Folder Path</h4>
+					<span id="plugin-path-text" class="filepath"></span>
+					<button onclick="choosePluginPath()" class="waves">Change Folder</button>
+				</div>
+				<div class="setting">
+					<h4>Persistent Mode Path</h4>
+					<span id="pm-path-text" class="filepath"></span>
+					<button onclick="choosePmPath()" class="waves">Change Folder</button>
+				</div>
+				<div class="setting">
+					<h4>Custom Languages Path</h4>
+					<span id="lang-path-text" class="filepath"></span>
+					<button onclick="chooseLangPath()" class="waves">Change Folder</button>
+				</div>
+				<div class="setting">
+					<button onclick="reloadLangs()" class="waves full">Reload Custom Languages</button>
+				</div>
 			</div>
 		</div>
 	</div>
-	
+
 	<script src="waves.min.js"></script>
+	<script src="jquery.scrollbar.min.js"></script>
 	<script src="ui.js"></script>
 </body>
 </html>

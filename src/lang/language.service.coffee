@@ -7,18 +7,19 @@ defaultLanguages = [
 ]
 
 isLanguageFolder = (entry) ->
-	fs.lstatSync(entry).isDirectory() && fs.existsSync "#{entry}/lang.js"
+	console.log entry
+	fs.lstatSync(entry).isDirectory() && fs.existsSync "#{entry}\\lang.js"
 
 listLanguageFolders = (folder) ->
-	entry for entry in fs.readdirSync folder when isLanguageFolder entry
+	"#{folder}\\#{entry}" for entry in fs.readdirSync folder when isLanguageFolder "#{folder}\\#{entry}"
 
 loadLanguage = (languages, languageFolder) ->
-	languages.push require("#{languageFolder}/lang.js")
+	languages.push require("#{languageFolder}\\lang.js")
 
 loadLanguagesFromFolderWithoutCaching = (languages, folder) ->
 	for languageFolder in listLanguageFolders folder
 		loadLanguage languages, languageFolder
-		delete require.cache[require.resolve("#{languageFolder}/lang.js")]
+		delete require.cache[require.resolve("#{languageFolder}\\lang.js")]
 
 class LanguageService
 	constructor: ->
