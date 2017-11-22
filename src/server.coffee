@@ -74,10 +74,17 @@ deleteFile = (guid, fileToo) ->
 reloadLangs = ->
 	languageService.reloadLanguages getSetting 'langPath'
 
+sendLangs = ->
+	langs = (language.info for language in languages when language.info.sendToRobloxStudio)
+	addCommand "reloadLanguages",
+		languages: langs
+
 loadSettings()
 
 languageService = new LanguageService()
-languageService.languages.subscribe (langs) -> languages = langs
+languageService.languages.subscribe (langs) ->
+	languages = langs
+	sendLangs()
 reloadLangs()
 
 # Create the web server. #
@@ -96,6 +103,8 @@ server.post "/new", (req, res) ->
 			deleteFile guid, false
 
 	guidCache[data.place_name] = []
+
+	sendLangs()
 
 	res.json
 		status: "OK"
@@ -152,7 +161,6 @@ server.post "/write/:action", (req, res) ->
 
 	# Determine what file extension we should use. #
 	language = languages.find (lang) -> lang.info.syntax == data.syntax
-	console.log(JSON.stringify(language.info))
 	fext = if language then language.info.extension else '.rbxs'
 
 	# Build the filename. #

@@ -20,6 +20,7 @@ local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName,
 pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
 sourceCache = {}
+languages   = {}
 gameGUID    = HttpService\GenerateGUID!
 temp        = true
 polling     = false
@@ -32,7 +33,7 @@ mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 debug = (...) ->
 	print "[RbxSync build #{BUILD}] ", ...
 
--- Creates a GUI alert to tell the user something, 
+-- Creates a GUI alert to tell the user something,
 -- also calls `debug` on the arguments. --
 alert = (...) ->
 	debug ...
@@ -53,14 +54,14 @@ alert = (...) ->
 
 	Spawn ->
 		wait 5
-		-- If the alert is still the most recent, hide it. 
+		-- If the alert is still the most recent, hide it.
 		-- Otherwise, keep it open since another alert has been issued. --
 		if snapshot == alertActive
 			alertBox.Visible = false
 
 -- Takes the injected mixin code and reverts it back to special RbxSync syntax. --
 parseMixinsOut = (source) ->
-	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and
 		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
@@ -74,7 +75,7 @@ parseMixinsOut = (source) ->
 
 -- Parses the special Mixin syntax and replaces it with the injected code. --
 parseMixinsIn = (source) ->
-	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and
 		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\find "@%(([%w_]+)%)"
@@ -104,11 +105,11 @@ hookChanges = (obj) ->
 				else
 					sendScript obj, false
 			when "Parent", "Name"
-				-- If the Parent or Name properties change, delete the script. 
+				-- If the Parent or Name properties change, delete the script.
 				-- deleteScript will handle sending the script again after the request completes if Parent is not nil. --
 				deleteScript obj
 
--- Deletes a script from the user's filesystem. 
+-- Deletes a script from the user's filesystem.
 -- Called when a script's `Name` or `Parent` properties are changed. --
 deleteScript = (obj) ->
 	return unless scriptCache[obj]
@@ -121,11 +122,11 @@ deleteScript = (obj) ->
 
 	pcall ->
 		HttpService\PostAsync "http://localhost:#{PORT}/delete", HttpService\JSONEncode(data), "ApplicationJson", false
-		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored. 
+		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored.
 		-- In cases of name change, this is done so we can wait for the delete request to finish before sending the newly-named script. --
 		sendScript obj, false
 
--- Sends a script to the filesystem. 
+-- Sends a script to the filesystem.
 -- Optional second parameter, which will open the file automatically in a code editor if true. --
 sendScript = (obj, open=true) ->
 	-- If the script doesn't have a Parent, ignore it. --
@@ -161,7 +162,7 @@ sendScript = (obj, open=true) ->
 		source = parseMixinsOut obj.Source
 
 	-- Send the data to the endpoint. --
-	data = 
+	data =
 		:path
 		:syntax
 		:source
@@ -191,7 +192,7 @@ startPoll = ->
 	Spawn ->
 		-- Waiting here prevents most connection loses
 		-- If polling returns immediatly, it would do 400 requests per minute
-		while wait 0.14 
+		while wait 0.14
 			success = pcall ->
 				body = HttpService\GetAsync "http://localhost:#{PORT}/poll", true
 				command = HttpService\JSONDecode body
@@ -222,6 +223,8 @@ startPoll = ->
 						-- An output command from the server, useful for showing information such as Moonscript compile errors. --
 						return if #command.data.text == 0
 						debug command.data.text
+					when "reloadLanguages"
+						languages = command.data.languages
 
 			-- Increment the failed counter if the request failed, or reset it upon success. --
 			failed += 1 unless success
@@ -326,8 +329,8 @@ checkMoonHelper = (obj, force) ->
 	hasExt = obj.Name\sub(#obj.Name-4, #obj.Name) == ".moon"
 
 	if force or hasExt or
-		obj.Source\lower! == "m" or 
-		obj.Source\lower! == "moon" or 
+		obj.Source\lower! == "m" or
+		obj.Source\lower! == "moon" or
 		obj.Source\lower! == "moonscript"
 			with Instance.new "StringValue", obj
 				.Name 	= "MoonScript"
@@ -336,7 +339,7 @@ checkMoonHelper = (obj, force) ->
 
 -- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
-	-- If the object meets the requirements, enable persistent mode. -- 
+	-- If the object meets the requirements, enable persistent mode. --
 	if obj.Name == "PlaceName" and #obj.Value > 0
 		resetCache!
 		gameGUID = obj.Value
@@ -371,9 +374,9 @@ with alertBox = Instance.new "TextLabel"
 	.Visible                = false
 	.TextWrapped            = true
 
--- Check that the game is not in test mode before enabling the plugin. 
+-- Check that the game is not in test mode before enabling the plugin.
 -- After starting a test mode, checking immediately for IsRunning sometimes fails.
--- Roblox seems to be doing more work at the start of a game than previously. 
+-- Roblox seems to be doing more work at the start of a game than previously.
 -- Before checking IsRunning, wait at least until after the first heartbeat then
 -- an additional half second to account for the additional work. It'd be even
 -- better to locate some consistent status indicator that Roblox's initialization
@@ -396,16 +399,16 @@ if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService"
 				if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
 					for obj in *Selection\Get!
 						checkMoonHelper obj, true
-				
+
 				doSelection!
 
 		-- Check if we should turn persistent mode on. --
 		for obj in *ServerScriptService\GetChildren!
 			placeNameAdded obj
-			
+
 		ServerScriptService.ChildAdded\connect placeNameAdded
 
 		for obj in *HttpService\GetChildren!
 			placeNameAddedHttp obj
-			
+
 		HttpService.ChildAdded\connect placeNameAdded

@@ -7,7 +7,6 @@ defaultLanguages = [
 ]
 
 isLanguageFolder = (entry) ->
-	console.log entry
 	fs.lstatSync(entry).isDirectory() && fs.existsSync "#{entry}\\lang.js"
 
 listLanguageFolders = (folder) ->
