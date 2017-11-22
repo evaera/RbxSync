@@ -14,8 +14,9 @@ ReplicatedStorage   = game\GetService "ReplicatedStorage"
 Selection           = game\GetService "Selection"
 UserInputService    = game\GetService "UserInputService"
 
-local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
+local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkLanguageHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
+local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt
 
 pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
@@ -96,9 +97,10 @@ hookChanges = (obj) ->
 
 		switch prop
 			when "Source"
-				-- Ignore MoonScript mode scripts --
-				if obj\FindFirstChild "MoonScript"
-					return
+				-- Ignore custom language mode scripts --
+				-- if obj\FindFirstChild "MoonScript"
+				-- 	return
+				return for language in *languages when obj\FindFirstChild language.originalSourceValueName
 				-- Ignore the change if we are the ones who changed the script. --
 				if sourceCache[obj] == obj.Source
 					sourceCache[obj] = nil
@@ -125,6 +127,9 @@ deleteScript = (obj) ->
 		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored.
 		-- In cases of name change, this is done so we can wait for the delete request to finish before sending the newly-named script. --
 		sendScript obj, false
+
+originalSourceValueExists = (obj, originalSourceValueName) ->
+	obj\FindFirstChild(originalSourceValueName) and obj[originalSourceValueName]\IsA("StringValue")
 
 -- Sends a script to the filesystem.
 -- Optional second parameter, which will open the file automatically in a code editor if true. --
@@ -154,10 +159,13 @@ sendScript = (obj, open=true) ->
 
 	-- Determine what syntax the script is using. --
 	local syntax, source
-	if obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
-		syntax = "moon"
-		source = obj.MoonScript.Value
-	else
+	for language in *languages
+		if originalSourceValueExists obj, language.originalSourceValueName
+			syntax = language.syntax
+			source = obj[language.originalSourceValueName].Value
+			break
+
+	unless syntax
 		syntax = "lua"
 		source = parseMixinsOut obj.Source
 
@@ -206,7 +214,7 @@ startPoll = ->
 
 							-- Only parse mixins if Lua. --
 							local source
-							if command.data.moon
+							if command.data.originalSource
 								source = moonBoilerplate .. command.data.source
 							else
 								source = parseMixinsIn command.data.source
@@ -217,8 +225,10 @@ startPoll = ->
 							-- Update the script. --
 							obj.Source = source
 
-							if command.data.moon and obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
-								obj.MoonScript.Value = command.data.moon
+							for language in *languages
+								if originalSourceValueExists obj, language.originalSourceValueName
+									obj[language.originalSourceValueName].Value = command.data.originalSource
+									break
 					when "output"
 						-- An output command from the server, useful for showing information such as Moonscript compile errors. --
 						return if #command.data.text == 0
@@ -312,30 +322,39 @@ doSelection = ->
 	for obj in *selection
 		if obj\IsA "LuaSourceContainer"
 			one = true
-			checkMoonHelper obj
+			checkLanguageHelper obj
 			sendScript obj
 
 	-- If at least one script wasn't found, show the user a help message. --
 	unless one
 		alert "Select one or more scripts in the Explorer."
 
--- Checks if a script should be automatically set to MoonScript mode when a user presses the plugin button.
--- Optional parameter `force`, which will bypass the check and forcibly convert to MoonScript mode. --
-checkMoonHelper = (obj, force) ->
+-- Checks if a script should be automatically set to a custom language mode when a user presses the plugin button.
+-- Optional parameter `forcedLanguage`, which will bypass the check and forcibly convert to custom language mode. --
+checkLanguageHelper = (obj, forcedLanguage) ->
 	return unless obj\IsA "LuaSourceContainer"
-	return if obj\FindFirstChild "MoonScript"
-	return if #obj.Source > 100
 
-	hasExt = obj.Name\sub(#obj.Name-4, #obj.Name) == ".moon"
+	if forcedLanguage
+		createOriginalSourceValue obj, forcedLanguage
+		return
 
-	if force or hasExt or
-		obj.Source\lower! == "m" or
-		obj.Source\lower! == "moon" or
-		obj.Source\lower! == "moonscript"
-			with Instance.new "StringValue", obj
-				.Name 	= "MoonScript"
-				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
-			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
+	for language in *languages
+		return if obj\FindFirstChild language.originalSourceValueName
+		return if #obj.Source > 100
+
+		for shortcut in *language.initializationShortcuts
+			if shortcut.type == "source" and obj.Source\lower! == shortcut.value
+				createOriginalSourceValue obj, language
+				return
+			elseif shortcut.type == "extension" and obj.Name\sub(#obj.Name - #shortcut.value + 1) == shortcut.value
+				createOriginalSourceValue obj, language
+				obj.Name = obj.Name\sub 1, #obj.Name - #shortcut.value
+				return
+
+createOriginalSourceValue = (obj, language) ->
+	with Instance.new "StringValue", obj
+		.Name  = language.originalSourceValueName
+		.Value = language.defaultSource
 
 -- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
@@ -391,15 +410,19 @@ if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService"
 
 		button.Click\connect doSelection
 
-		-- Hook up the keybinds Ctrl+B and Ctrl+Alt+B --
+		-- Hook up the keybinds Ctrl+B and any custom language hotkey bindings --
 		UserInputService.InputBegan\connect (input, gpe) ->
 			return if gpe
 
-			if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
-				if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
-					for obj in *Selection\Get!
-						checkMoonHelper obj, true
+			for language in *languages
+				for shortcut in *language.initializationShortcuts
+					if shortcut.type == "hotkey" and input.KeyCode == Enum.KeyCode[shortcut.value] and isHoldingCtrlAndAlt!
+						for obj in *Selection\Get!
+							checkLanguageHelper obj, language
+						doSelection!
+						return
 
+			if input.KeyCode == Enum.KeyCode.B and isHoldingCtrl!
 				doSelection!
 
 		-- Check if we should turn persistent mode on. --
@@ -412,3 +435,9 @@ if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService"
 			placeNameAddedHttp obj
 
 		HttpService.ChildAdded\connect placeNameAdded
+
+isHoldingCtrlAndAlt = ->
+	isHoldingCtrl! and (UserInputService\IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService\IsKeyDown(Enum.KeyCode.RightAlt))
+
+isHoldingCtrl = ->
+	UserInputService\IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService\IsKeyDown(Enum.KeyCode.RightControl)

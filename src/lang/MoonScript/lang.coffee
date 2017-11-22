@@ -6,6 +6,7 @@ module.exports =
 		syntax: 'moon'
 		sendToRobloxStudio: true
 		originalSourceValueName: 'MoonScript'
+		defaultSource: 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
 		initializationShortcuts: [
 			{ type: 'hotkey', value: 'B' }
 			{ type: 'source', value: 'm' }
@@ -21,4 +22,4 @@ module.exports =
 				addCommand "update",
 					guid: guid
 					source: stdout
-					moon: fileSource
+					originalSource: fileSource
