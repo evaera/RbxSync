@@ -16,7 +16,7 @@ UserInputService    = game\GetService "UserInputService"
 
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkLanguageHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
-local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt
+local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt, languageSupportsRobloxObject
 
 pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
@@ -131,6 +131,10 @@ deleteScript = (obj) ->
 originalSourceValueExists = (obj, originalSourceValueName) ->
 	obj\FindFirstChild(originalSourceValueName) and obj[originalSourceValueName]\IsA("StringValue")
 
+languageSupportsRobloxObject = (obj, unallowedRobloxClasses) ->
+	return false for unallowedRobloxClass in *unallowedRobloxClasses when obj\IsA unallowedRobloxClass
+	return true
+
 -- Sends a script to the filesystem.
 -- Optional second parameter, which will open the file automatically in a code editor if true. --
 sendScript = (obj, open=true) ->
@@ -160,7 +164,7 @@ sendScript = (obj, open=true) ->
 	-- Determine what syntax the script is using. --
 	local syntax, source
 	for language in *languages
-		if originalSourceValueExists obj, language.originalSourceValueName
+		if originalSourceValueExists(obj, language.originalSourceValueName) and languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
 			syntax = language.syntax
 			source = obj[language.originalSourceValueName].Value
 			break
@@ -226,7 +230,7 @@ startPoll = ->
 							obj.Source = source
 
 							for language in *languages
-								if originalSourceValueExists obj, language.originalSourceValueName
+								if originalSourceValueExists(obj, language.originalSourceValueName) and languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
 									obj[language.originalSourceValueName].Value = command.data.originalSource
 									break
 					when "output"
@@ -334,11 +338,12 @@ doSelection = ->
 checkLanguageHelper = (obj, forcedLanguage) ->
 	return unless obj\IsA "LuaSourceContainer"
 
-	if forcedLanguage
+	if forcedLanguage and languageSupportsRobloxObject(obj, forcedLanguage.unallowedRobloxClasses)
 		createOriginalSourceValue obj, forcedLanguage
 		return
 
 	for language in *languages
+		return unless languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
 		return if obj\FindFirstChild language.originalSourceValueName
 		return if #obj.Source > 100
 
