@@ -17,6 +17,7 @@ UserInputService    = game\GetService "UserInputService"
 local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkLanguageHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
 local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt, languageSupportsRobloxObject
+local splitString, importLanguageLuaIncludes, getDestinationFolder, getOrCreateFolder
 
 pmPath      = "Documents\\ROBLOX\\RSync"
 scriptCache = {}
@@ -135,6 +136,37 @@ languageSupportsRobloxObject = (obj, unallowedRobloxClasses) ->
 	return false for unallowedRobloxClass in *unallowedRobloxClasses when obj\IsA unallowedRobloxClass
 	return true
 
+importLanguageLuaIncludes = (luaIncludes) ->
+	for include in *luaIncludes
+		destinationSegments = splitString include.destination
+		destination = getDestinationFolder destinationSegments
+		destination = getOrCreateFolder destination, "v#{include.version}" if include.version
+
+		unless destination\FindFirstChild include.name
+			with Instance.new "ModuleScript"
+				.Name = include.name
+				.Source = include.source
+				.Parent = destination
+
+splitString = (str, sep = "%.") ->
+	results = {}
+	string.gsub str, "([^#{sep}]+)", (match) ->
+		table.insert results, match
+	return results
+
+getDestinationFolder = (destinationSegments) ->
+	destination = game
+	for segment in *destinationSegments
+			destination = getOrCreateFolder destination, segment
+	return destination
+
+getOrCreateFolder = (parent, folderName) ->
+	folder = parent\FindFirstChild folderName
+	unless folder
+		folder = with Instance.new "Folder", parent
+			.Name = folderName
+	return folder
+
 -- Sends a script to the filesystem.
 -- Optional second parameter, which will open the file automatically in a code editor if true. --
 sendScript = (obj, open=true) ->
@@ -239,6 +271,7 @@ startPoll = ->
 						debug command.data.text
 					when "reloadLanguages"
 						languages = command.data.languages
+						importLanguageLuaIncludes(language.luaIncludes) for language in *languages
 
 			-- Increment the failed counter if the request failed, or reset it upon success. --
 			failed += 1 unless success
