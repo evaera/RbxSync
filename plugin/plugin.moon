@@ -291,6 +291,7 @@ init = (cb) ->
 			-- Check that the version of the plugin matches the version of the helper client. --
 			if data.build == BUILD
 				pmPath = data.pm
+				languages = data.languages
 				startPoll!
 				cb!
 			else

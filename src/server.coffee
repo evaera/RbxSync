@@ -104,7 +104,7 @@ server.post "/new", (req, res) ->
 
 	guidCache[data.place_name] = []
 
-	sendLangs()
+	#sendLangs()
 
 	res.json
 		status: "OK"
@@ -112,6 +112,7 @@ server.post "/new", (req, res) ->
 		pm: getSetting 'pmPath'
 		version: VERSION
 		build: BUILD
+		languages: (language.info for language in languages when language.info.sendToRobloxStudio)
 
 # The long-polling endpoint. It has a maximum timeout of 50 seconds, leaving 10 seconds of room as the
 # ROBLOX maximum request timeout is 60 seconds. #
