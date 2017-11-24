@@ -20,6 +20,7 @@ watchers 	= {}
 guidCache	= {}
 settingsLoaded = false
 languages = []
+languageService = new LanguageService()
 
 settings = {}
 settingsPath = path.join app.getPath("userData"), "settings.json"
@@ -81,7 +82,6 @@ sendLangs = ->
 
 loadSettings()
 
-languageService = new LanguageService()
 languageService.languages.subscribe (langs) ->
 	languages = langs
 	sendLangs()
@@ -229,3 +229,4 @@ module.exports =
 	getSetting: getSetting
 	setSetting: setSetting
 	reloadLangs: reloadLangs
+	languageErrors: languageService.errors

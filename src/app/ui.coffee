@@ -44,6 +44,9 @@ ipcRenderer.on 'updatePaths', updatePaths
 
 updatePaths()
 
+ipcRenderer.on 'displayError', (e, message) ->
+	alert message
+
 Waves.attach '.waves'
 Waves.init()
 

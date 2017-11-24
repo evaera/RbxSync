@@ -132,6 +132,9 @@ app.on 'ready', ->
 	# Check for an update.
 	checkForUpdate menu
 
+	httpServer.languageErrors.subscribe (message) ->
+		win.webContents.send 'displayError', message
+
 	console.log "Ready."
 
 ipcMain.on 'quit', () ->
