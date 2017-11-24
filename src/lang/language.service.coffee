@@ -1,6 +1,8 @@
 fs = require 'fs'
 Rx = require 'rxjs/Rx'
 
+LanguageValidationService = require './language-validation.service.js'
+
 defaultLanguages = [
 	'./Lua'
 	'./MoonScript'
@@ -18,6 +20,7 @@ class LanguageService
 
 loadLanguage = (languages, languageFolder) ->
 	language = require "#{languageFolder}\\lang.js"
+	LanguageValidationService.setLanguageDefaults language
 
 	if language.info.luaIncludes && language.info.luaIncludes.constructor == Array
 		setIncludeSource include, "#{languageFolder}\\#{include.file}" for include in language.info.luaIncludes
