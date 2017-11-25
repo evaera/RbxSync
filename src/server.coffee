@@ -73,6 +73,7 @@ deleteFile = (guid, fileToo) ->
 		delete fileCache[guid]
 
 reloadLangs = ->
+	mkdirp getSetting 'langPath' unless fs.existsSync getSetting 'langPath'
 	languageService.reloadLanguages getSetting 'langPath'
 
 sendLangs = ->
