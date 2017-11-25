@@ -5,10 +5,12 @@
   "dependencies": {
     "body-parser": "^1.15.2",
     "express": "^4.14.0",
+    "jsonschema": "^1.2.0",
     "mkdirp": "^0.5.1",
     "portastic": "^1.0.1",
     "properties-parser": "^0.3.1",
-    "request": "^2.74.0"
+    "request": "^2.74.0",
+    "rxjs": "^5.5.2"
   },
   "devDependencies": {
     "coffee-script": "^1.10.0",

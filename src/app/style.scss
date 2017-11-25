@@ -157,6 +157,7 @@ h1, h2, h3, h4 {
 	position: absolute;
 	top: 0;
 	left: 0;
+  height: 100%;
 	width: 100%;
 	display: none;
 
@@ -167,11 +168,19 @@ h1, h2, h3, h4 {
 		z-index: 100;
 	}
 
-	.container {
-		width: 80%;
-		margin: 0 auto;
-		margin-top: 80px;
-	}
+  .container-spacing {
+    position: absolute;
+      top: 80px;
+      left: 10%;
+      bottom: 40px;
+    width: 80%;
+
+    & > .container {
+      box-sizing: border-box;
+      max-height: 100%;
+      padding: 5px;
+    }
+  }
 
 	.logo {
 		position: absolute;
@@ -193,6 +202,10 @@ h1, h2, h3, h4 {
 		padding: 10px 5px;
 	}
 
+  .scroll-wrapper .filepath {
+    max-width: 96%;
+  }
+
 	.setting {
 		margin-bottom: 50px;
 		clear: both;
@@ -200,6 +213,10 @@ h1, h2, h3, h4 {
 		button {
 			float: right;
 		}
+
+    button.full {
+      width: 100%;
+    }
 	}
 }
 

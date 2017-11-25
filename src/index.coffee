@@ -1,6 +1,6 @@
 {app, BrowserWindow, Tray, Menu, MenuItem, shell, dialog, ipcMain} =
 	require 'electron'
- 
+
 fs 				= require 'fs'
 path 			= require 'path'
 portastic		= require 'portastic'
@@ -9,7 +9,7 @@ request			= require 'request'
 
 httpServer 		= require './server'
 
-{PORT, VERSION, BUILD} = 
+{PORT, VERSION, BUILD} =
 	require './config.json'
 
 tray 	= null
@@ -58,7 +58,7 @@ checkForUpdate = (menu) ->
 			win.webContents.send 'updateAvailable'
 
 			# Display a notification that there is an update. #
-			tray.displayBalloon 
+			tray.displayBalloon
 				title: "A new update for RbxSync is available."
 				content: "Right-click on the tray icon to download the new update."
 
@@ -79,7 +79,7 @@ app.on 'ready', ->
 				buttons: []
 			, ->
 				quitApp()
-		
+
 	# Create the tray icon and context menu. #
 	tray = new Tray path.join(__dirname, "icon.png")
 
@@ -129,14 +129,17 @@ app.on 'ready', ->
 
 	win.show()
 
-	# Check for an update. 
+	# Check for an update.
 	checkForUpdate menu
+
+	httpServer.languageErrors.subscribe (message) ->
+		win.webContents.send 'displayError', message
 
 	console.log "Ready."
 
 ipcMain.on 'quit', () ->
 	quitApp()
-	
+
 ipcMain.on 'update', ->
 	shell.openExternal "https://github.com/evaera/RbxSync/releases"
 	quitApp()
@@ -152,6 +155,11 @@ ipcMain.on 'setSettingPath', (event, name) ->
 			win.webContents.send 'updatePaths'
 			if name is "pluginPath"
 				copyPlugin()
+			else if name is "langPath"
+				httpServer.reloadLangs()
+
+ipcMain.on 'reloadLangs', (event) ->
+	httpServer.reloadLangs()
 
 ipcMain.on 'getPath', (event, name) ->
 	event.returnValue = httpServer.getSetting(name)

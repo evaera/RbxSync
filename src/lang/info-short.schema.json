@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "properties": {
+    "extension":          { "type": "string", "required": true },
+    "syntax":             { "type": "string", "required": true },
+    "sendToRobloxStudio": { "type": "boolean" }
+  }
+}

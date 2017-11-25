@@ -14,13 +14,16 @@ ReplicatedStorage   = game\GetService "ReplicatedStorage"
 Selection           = game\GetService "Selection"
 UserInputService    = game\GetService "UserInputService"
 
-local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkMoonHelper
+local hookChanges, sendScript, doSelection, alertBox, alertActive, resetCache, checkLanguageHelper
 local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName, placeNameAdded
+local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt, languageSupportsRobloxObject
+local splitString, importLanguageLuaIncludes, getDestinationFolder, getOrCreateFolder
 
 pmPath            = "Documents\\ROBLOX\\RSync"
 illegalCharacters = '[<>:"\\|?*]'
 scriptCache       = {}
 sourceCache       = {}
+languages         = {}
 gameGUID          = HttpService\GenerateGUID!
 temp              = true
 polling           = false
@@ -33,7 +36,7 @@ mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
 debug = (...) ->
 	print "[RbxSync build #{BUILD}] ", ...
 
--- Creates a GUI alert to tell the user something, 
+-- Creates a GUI alert to tell the user something,
 -- also calls `debug` on the arguments. --
 alert = (...) ->
 	debug ...
@@ -46,7 +49,7 @@ alert = (...) ->
 		text ..= segment .. " "
 	text = text\sub 1, #text-1
 
-	alertBox.Text = text  
+	alertBox.Text = text
 	alertBox.Visible = true
 
 	-- Store the current alert's time. --
@@ -54,14 +57,14 @@ alert = (...) ->
 
 	Spawn ->
 		wait 5
-		-- If the alert is still the most recent, hide it. 
+		-- If the alert is still the most recent, hide it.
 		-- Otherwise, keep it open since another alert has been issued. --
 		if snapshot == alertActive
 			alertBox.Visible = false
 
 -- Takes the injected mixin code and reverts it back to special RbxSync syntax. --
 parseMixinsOut = (source) ->
-	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and
 		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\sub(1, #mixinRequire) == mixinRequire
@@ -75,7 +78,7 @@ parseMixinsOut = (source) ->
 
 -- Parses the special Mixin syntax and replaces it with the injected code. --
 parseMixinsIn = (source) ->
-	return source unless ReplicatedStorage\FindFirstChild("Mixins") and 
+	return source unless ReplicatedStorage\FindFirstChild("Mixins") and
 		ReplicatedStorage.Mixins\IsA("ModuleScript")
 
 	if source\find "@%(([%w_]+)%)"
@@ -96,20 +99,21 @@ hookChanges = (obj) ->
 
 		switch prop
 			when "Source"
-				-- Ignore MoonScript mode scripts --
-				if obj\FindFirstChild "MoonScript"
-					return
+				-- Ignore custom language mode scripts --
+				-- if obj\FindFirstChild "MoonScript"
+				-- 	return
+				return for language in *languages when obj\FindFirstChild language.originalSourceValueName
 				-- Ignore the change if we are the ones who changed the script. --
 				if sourceCache[obj] == obj.Source
 					sourceCache[obj] = nil
 				else
 					sendScript obj, false
 			when "Parent", "Name"
-				-- If the Parent or Name properties change, delete the script. 
+				-- If the Parent or Name properties change, delete the script.
 				-- deleteScript will handle sending the script again after the request completes if Parent is not nil. --
 				deleteScript obj
 
--- Deletes a script from the user's filesystem. 
+-- Deletes a script from the user's filesystem.
 -- Called when a script's `Name` or `Parent` properties are changed. --
 deleteScript = (obj) ->
 	return unless scriptCache[obj]
@@ -122,11 +126,49 @@ deleteScript = (obj) ->
 
 	pcall ->
 		HttpService\PostAsync "http://localhost:#{PORT}/delete", HttpService\JSONEncode(data), "ApplicationJson", false
-		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored. 
+		-- Immediately send the script again. If the parent is still nil in the game, it will be ignored.
 		-- In cases of name change, this is done so we can wait for the delete request to finish before sending the newly-named script. --
 		sendScript obj, false
 
--- Sends a script to the filesystem. 
+originalSourceValueExists = (obj, originalSourceValueName) ->
+	obj\FindFirstChild(originalSourceValueName) and obj[originalSourceValueName]\IsA("StringValue")
+
+languageSupportsRobloxObject = (obj, unallowedRobloxClasses) ->
+	return false for unallowedRobloxClass in *unallowedRobloxClasses when obj\IsA unallowedRobloxClass
+	return true
+
+importLanguageLuaIncludes = (luaIncludes) ->
+	for include in *luaIncludes
+		destinationSegments = splitString include.destination
+		destination = getDestinationFolder destinationSegments
+		destination = getOrCreateFolder destination, "v#{include.version}" if include.version
+
+		unless destination\FindFirstChild include.name
+			with Instance.new "ModuleScript"
+				.Name = include.name
+				.Source = include.source
+				.Parent = destination
+
+splitString = (str, sep = "%.") ->
+	results = {}
+	string.gsub str, "([^#{sep}]+)", (match) ->
+		table.insert results, match
+	return results
+
+getDestinationFolder = (destinationSegments) ->
+	destination = game
+	for segment in *destinationSegments
+			destination = getOrCreateFolder destination, segment
+	return destination
+
+getOrCreateFolder = (parent, folderName) ->
+	folder = parent\FindFirstChild folderName
+	unless folder
+		folder = with Instance.new "Folder", parent
+			.Name = folderName
+	return folder
+
+-- Sends a script to the filesystem.
 -- Optional second parameter, which will open the file automatically in a code editor if true. --
 sendScript = (obj, open=true) ->
 	-- If the script doesn't have a Parent, ignore it. --
@@ -154,15 +196,19 @@ sendScript = (obj, open=true) ->
 
 	-- Determine what syntax the script is using. --
 	local syntax, source
-	if obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
-		syntax = "moon"
-		source = obj.MoonScript.Value
-	else
+	for language in *languages
+		if originalSourceValueExists(obj, language.originalSourceValueName) and languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
+			syntax = language.syntax
+			source = obj[language.originalSourceValueName].Value
+			importLanguageLuaIncludes language.luaIncludes
+			break
+
+	unless syntax
 		syntax = "lua"
 		source = parseMixinsOut obj.Source
-  
+
 	-- Send the data to the endpoint. --
-	data = 
+	data =
 		:path
 		:syntax
 		:source
@@ -192,7 +238,7 @@ startPoll = ->
 	Spawn ->
 		-- Waiting here prevents most connection loses
 		-- If polling returns immediatly, it would do 400 requests per minute
-		while wait 0.14 
+		while wait 0.14
 			success = pcall ->
 				body = HttpService\GetAsync "http://localhost:#{PORT}/poll", true
 				command = HttpService\JSONDecode body
@@ -206,7 +252,7 @@ startPoll = ->
 
 							-- Only parse mixins if Lua. --
 							local source
-							if command.data.moon
+							if command.data.originalSource
 								source = moonBoilerplate .. command.data.source
 							else
 								source = parseMixinsIn command.data.source
@@ -217,12 +263,16 @@ startPoll = ->
 							-- Update the script. --
 							obj.Source = source
 
-							if command.data.moon and obj\FindFirstChild("MoonScript") and obj.MoonScript\IsA("StringValue")
-								obj.MoonScript.Value = command.data.moon
+							for language in *languages
+								if originalSourceValueExists(obj, language.originalSourceValueName) and languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
+									obj[language.originalSourceValueName].Value = command.data.originalSource
+									break
 					when "output"
 						-- An output command from the server, useful for showing information such as Moonscript compile errors. --
 						return if #command.data.text == 0
 						debug command.data.text
+					when "reloadLanguages"
+						languages = command.data.languages
 
 			-- Increment the failed counter if the request failed, or reset it upon success. --
 			failed += 1 unless success
@@ -242,6 +292,7 @@ init = (cb) ->
 			-- Check that the version of the plugin matches the version of the helper client. --
 			if data.build == BUILD
 				pmPath = data.pm
+				languages = data.languages
 				startPoll!
 				cb!
 			else
@@ -310,34 +361,44 @@ doSelection = ->
 	for obj in *selection
 		if obj\IsA "LuaSourceContainer"
 			one = true
-			checkMoonHelper obj
+			checkLanguageHelper obj
 			sendScript obj
 
 	-- If at least one script wasn't found, show the user a help message. --
 	unless one
 		alert "Select one or more scripts in the Explorer."
 
--- Checks if a script should be automatically set to MoonScript mode when a user presses the plugin button.
--- Optional parameter `force`, which will bypass the check and forcibly convert to MoonScript mode. --
-checkMoonHelper = (obj, force) ->
+-- Checks if a script should be automatically set to a custom language mode when a user presses the plugin button.
+-- Optional parameter `forcedLanguage`, which will bypass the check and forcibly convert to custom language mode. --
+checkLanguageHelper = (obj, forcedLanguage) ->
 	return unless obj\IsA "LuaSourceContainer"
-	return if obj\FindFirstChild "MoonScript"
-	return if #obj.Source > 100
 
-	hasExt = obj.Name\sub(#obj.Name-4, #obj.Name) == ".moon"
+	if forcedLanguage and languageSupportsRobloxObject(obj, forcedLanguage.unallowedRobloxClasses)
+		createOriginalSourceValue obj, forcedLanguage
+		return
 
-	if force or hasExt or
-		obj.Source\lower! == "m" or 
-		obj.Source\lower! == "moon" or 
-		obj.Source\lower! == "moonscript"
-			with Instance.new "StringValue", obj
-				.Name 	= "MoonScript"
-				.Value 	= 'print "Hello", "from MoonScript", "Lua version: #{_VERSION}"'
-			obj.Name = obj.Name\sub 1, #obj.Name-5 if hasExt
+	for language in *languages
+		return unless languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
+		return if obj\FindFirstChild language.originalSourceValueName
+		return if #obj.Source > 100
+
+		for shortcut in *language.initializationShortcuts
+			if shortcut.type == "source" and obj.Source\lower! == shortcut.value
+				createOriginalSourceValue obj, language
+				return
+			elseif shortcut.type == "extension" and obj.Name\sub(#obj.Name - #shortcut.value + 1) == shortcut.value
+				createOriginalSourceValue obj, language
+				obj.Name = obj.Name\sub 1, #obj.Name - #shortcut.value
+				return
+
+createOriginalSourceValue = (obj, language) ->
+	with Instance.new "StringValue", obj
+		.Name  = language.originalSourceValueName
+		.Value = language.defaultSource
 
 -- Check HttpService for StringValue "PlaceName" to see if we should enable persistent mode. --
 checkForPlaceName = (obj) ->
-	-- If the object meets the requirements, enable persistent mode. -- 
+	-- If the object meets the requirements, enable persistent mode. --
 	if obj.Name == "PlaceName" and #obj.Value > 0
 		resetCache!
 		gameGUID = obj.Value
@@ -372,9 +433,9 @@ with alertBox = Instance.new "TextLabel"
 	.Visible                = false
 	.TextWrapped            = true
 
--- Check that the game is not in test mode before enabling the plugin. 
+-- Check that the game is not in test mode before enabling the plugin.
 -- After starting a test mode, checking immediately for IsRunning sometimes fails.
--- Roblox seems to be doing more work at the start of a game than previously. 
+-- Roblox seems to be doing more work at the start of a game than previously.
 -- Before checking IsRunning, wait at least until after the first heartbeat then
 -- an additional half second to account for the additional work. It'd be even
 -- better to locate some consistent status indicator that Roblox's initialization
@@ -389,24 +450,34 @@ if (game\GetService("RunService")\IsStudio! and not game\GetService("RunService"
 
 		button.Click\connect doSelection
 
-		-- Hook up the keybinds Ctrl+B and Ctrl+Alt+B --
+		-- Hook up the keybinds Ctrl+B and any custom language hotkey bindings --
 		UserInputService.InputBegan\connect (input, gpe) ->
 			return if gpe
 
-			if input.KeyCode == Enum.KeyCode.B and UserInputService\IsKeyDown(Enum.KeyCode.LeftControl)
-				if UserInputService\IsKeyDown Enum.KeyCode.LeftAlt
-					for obj in *Selection\Get!
-						checkMoonHelper obj, true
-				
+			for language in *languages
+				for shortcut in *language.initializationShortcuts
+					if shortcut.type == "hotkey" and input.KeyCode == Enum.KeyCode[shortcut.value] and isHoldingCtrlAndAlt!
+						for obj in *Selection\Get!
+							checkLanguageHelper obj, language
+						doSelection!
+						return
+
+			if input.KeyCode == Enum.KeyCode.B and isHoldingCtrl!
 				doSelection!
 
 		-- Check if we should turn persistent mode on. --
 		for obj in *ServerScriptService\GetChildren!
 			placeNameAdded obj
-			
+
 		ServerScriptService.ChildAdded\connect placeNameAdded
 
 		for obj in *HttpService\GetChildren!
 			placeNameAddedHttp obj
-			
+
 		HttpService.ChildAdded\connect placeNameAdded
+
+isHoldingCtrlAndAlt = ->
+	isHoldingCtrl! and (UserInputService\IsKeyDown(Enum.KeyCode.LeftAlt) or UserInputService\IsKeyDown(Enum.KeyCode.RightAlt))
+
+isHoldingCtrl = ->
+	UserInputService\IsKeyDown(Enum.KeyCode.LeftControl) or UserInputService\IsKeyDown(Enum.KeyCode.RightControl)

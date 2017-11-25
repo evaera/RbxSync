@@ -8,8 +8,10 @@ path 			= require 'path'
 mkdirp			= require 'mkdirp'
 {exec}			= require 'child_process'
 
-{BUILD, VERSION} = 
+{BUILD, VERSION} =
 	require './config.json'
+
+LanguageService = require './lang/language.service.js'
 
 commands 	= []
 lprequest 	= null
@@ -17,6 +19,8 @@ fileCache 	= {}
 watchers 	= {}
 guidCache	= {}
 settingsLoaded = false
+languages = []
+languageService = new LanguageService()
 
 settings = {}
 settingsPath = path.join app.getPath("userData"), "settings.json"
@@ -31,6 +35,8 @@ getSetting = (name) ->
 			path.join(app.getPath("documents"), "ROBLOX", "RSync")
 		when "tempPath"
 			path.join(app.getPath("temp"), "RSync")
+		when "langPath"
+			path.join(app.getPath("documents"), "ROBLOX", "RbxSyncLanguages")
 
 setSetting = (name, value) ->
 	settings[name] = value
@@ -66,7 +72,21 @@ deleteFile = (guid, fileToo) ->
 		delete fileCache[fileCache[guid]]
 		delete fileCache[guid]
 
+reloadLangs = ->
+	mkdirp getSetting 'langPath' unless fs.existsSync getSetting 'langPath'
+	languageService.reloadLanguages getSetting 'langPath'
+
+sendLangs = ->
+	langs = (language.info for language in languages when language.info.sendToRobloxStudio)
+	addCommand "reloadLanguages",
+		languages: langs
+
 loadSettings()
+
+languageService.languages.subscribe (langs) ->
+	languages = langs
+	sendLangs()
+reloadLangs()
 
 # Create the web server. #
 server = express()
@@ -85,14 +105,17 @@ server.post "/new", (req, res) ->
 
 	guidCache[data.place_name] = []
 
-	res.json 
+	#sendLangs()
+
+	res.json
 		status: "OK"
 		app: "RSync"
 		pm: getSetting 'pmPath'
 		version: VERSION
 		build: BUILD
+		languages: (language.info for language in languages when language.info.sendToRobloxStudio)
 
-# The long-polling endpoint. It has a maximum timeout of 50 seconds, leaving 10 seconds of room as the 
+# The long-polling endpoint. It has a maximum timeout of 50 seconds, leaving 10 seconds of room as the
 # ROBLOX maximum request timeout is 60 seconds. #
 server.get "/poll", (req, res) ->
 	lprequest = null
@@ -101,7 +124,7 @@ server.get "/poll", (req, res) ->
 	if commands.length
 		res.json commands.shift()
 	else
-		# Otherwise, save the request in a variable and create the timeout to end 
+		# Otherwise, save the request in a variable and create the timeout to end
 		# the request if no commands come through. #
 		lprequest = res
 		setTimeout ->
@@ -139,16 +162,11 @@ server.post "/write/:action", (req, res) ->
 			ext = ""
 
 	# Determine what file extension we should use. #
-	switch data.syntax
-		when "lua"
-			fext = ".lua"
-		when "moon"
-			fext = ".moon"
-		else
-			fext = ".rbxs"
+	language = languages.find (lang) -> lang.info.syntax == data.syntax
+	fext = if language then language.info.extension else '.rbxs'
 
 	# Build the filename. #
-	filename = "#{data.name}#{ext}#{fext}"	
+	filename = "#{data.name}#{ext}#{fext}"
 
 	# If persistent mode is enabled, use pmPath for a save path. Otherwise, use tempPath. #
 	console.log data.temp
@@ -193,26 +211,8 @@ server.post "/write/:action", (req, res) ->
 						fileSource = fs.readFileSync file, encoding: 'utf8'
 					catch error
 						return console.log error
-						
-					switch data.syntax
-						when "lua"
-							# Send a Lua script back to the plugin. #
-							addCommand "update", 
-								guid: data.guid
-								source: fileSource
-						when "moon"
-							# Compiles MoonScript and sends it back to the plugin. #
-							exec "moonc -p \"#{file}\"", (err, stdout, stderr) ->
-								if err
-									# If there was an error while compiling, send it to Studio's output. #
-									return addCommand "output",
-										text: stderr
 
-								try
-									addCommand "update",
-										guid: data.guid
-										source: stdout
-										moon: fileSource
+					language.transpile(file, fileSource, addCommand, data.guid) if language
 
 		# Update our caches with new information about the file. #
 		fileCache[file] 		= data.guid
@@ -223,10 +223,12 @@ server.post "/write/:action", (req, res) ->
 
 	res.send "OK"
 
-module.exports = 
+module.exports =
 	areSettingsReady: -> settingsLoaded
 	listen: (port) ->
 		server.listen port
 	addCommand: addCommand
 	getSetting: getSetting
 	setSetting: setSetting
+	reloadLangs: reloadLangs
+	languageErrors: languageService.errors

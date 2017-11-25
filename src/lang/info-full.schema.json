@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "extension":               { "type": "string", "required": true },
+    "syntax":                  { "type": "string", "required": true },
+    "sendToRobloxStudio":      { "type": "boolean" },
+    "originalSourceValueName": { "type": "string", "required": true},
+    "defaultSource":           { "type": "string" },
+    "unallowedRobloxClasses": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "initializationShortcuts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type":  { "type": "string", "required": true },
+          "value": { "type": "string", "required": true }
+        }
+      }
+    },
+    "luaIncludes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file":        { "type": "string", "required": true },
+          "name":        { "type": "string", "required": true },
+          "version":     { "type": "string" },
+          "destination": { "type": "string", "required": true }
+        }
+      }
+    }
+  }
+}
