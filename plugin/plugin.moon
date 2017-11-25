@@ -19,14 +19,15 @@ local justAdded, parseMixinsOut, parseMixinsIn, deleteScript, checkForPlaceName,
 local createOriginalSourceValue, isHoldingCtrl, isHoldingCtrlAndAlt, languageSupportsRobloxObject
 local splitString, importLanguageLuaIncludes, getDestinationFolder, getOrCreateFolder
 
-pmPath      = "Documents\\ROBLOX\\RSync"
-scriptCache = {}
-sourceCache = {}
-languages   = {}
-gameGUID    = HttpService\GenerateGUID!
-temp        = true
-polling     = false
-failed      = 0
+pmPath            = "Documents\\ROBLOX\\RSync"
+illegalCharacters = '[<>:"\\|?*]'
+scriptCache       = {}
+sourceCache       = {}
+languages         = {}
+gameGUID          = HttpService\GenerateGUID!
+temp              = true
+polling           = false
+failed            = 0
 
 mixinString = "__RSMIXIN('%1', script, getfenv())"
 mixinStringPattern = "__RSMIXIN%('([%w_]+)', script, getfenv%(%)%)"
@@ -182,7 +183,7 @@ sendScript = (obj, open=true) ->
 
 	path = ""
 	for ancestor in *stack
-		path ..= ancestor.Name .. "/"
+		path ..= ancestor.Name\gsub(illegalCharacters, '') .. "/"
 
 	-- Check if this is the first time we've seen this script. --
 	if not scriptCache[obj]
@@ -212,7 +213,7 @@ sendScript = (obj, open=true) ->
 		:syntax
 		:source
 		:temp
-		name: obj.Name
+		name: obj.Name\gsub(illegalCharacters, '')
 		class: obj.ClassName
 		place_name: gameGUID
 		guid: scriptCache[obj]
