@@ -170,9 +170,9 @@ server.post "/write/:action", (req, res) ->
 			if num?
 				num = parseInt num, 10
 				num += 1
-				file = path.join filepath, "#{data.name}#{ext} (#{num}).#{ext}"
+				file = path.join filepath, "#{data.name}#{ext} (#{num}).#{ext}#{fext}"
 			else
-				file = path.join filepath, "#{data.name}#{ext} (2).#{ext}"
+				file = path.join filepath, "#{data.name}#{ext} (2).#{ext}#{fext}"
 
 			if fileCache[file] is data.guid
 				break
