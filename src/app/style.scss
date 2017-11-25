@@ -177,11 +177,8 @@ h1, h2, h3, h4 {
 
     & > .container {
       box-sizing: border-box;
-      // height: 100%;
-      // overflow: auto;
       max-height: 100%;
       padding: 5px;
-      // width: 100%;
     }
   }
 
@@ -204,6 +201,10 @@ h1, h2, h3, h4 {
 		font-size: 12px;
 		padding: 10px 5px;
 	}
+
+  .scroll-wrapper .filepath {
+    max-width: 96%;
+  }
 
 	.setting {
 		margin-bottom: 50px;
