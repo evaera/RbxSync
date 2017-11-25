@@ -199,6 +199,7 @@ sendScript = (obj, open=true) ->
 		if originalSourceValueExists(obj, language.originalSourceValueName) and languageSupportsRobloxObject(obj, language.unallowedRobloxClasses)
 			syntax = language.syntax
 			source = obj[language.originalSourceValueName].Value
+			importLanguageLuaIncludes language.luaIncludes
 			break
 
 	unless syntax
@@ -271,7 +272,6 @@ startPoll = ->
 						debug command.data.text
 					when "reloadLanguages"
 						languages = command.data.languages
-						importLanguageLuaIncludes(language.luaIncludes) for language in *languages
 
 			-- Increment the failed counter if the request failed, or reset it upon success. --
 			failed += 1 unless success
