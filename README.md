@@ -1,7 +1,47 @@
-# RbxSync - Third party IDE support for ROBLOX Studio in one click
+# RbxSync is no longer supported
+**RbxSync will no longer be receiving updates and is now archived**. I recommend you use [Rojo](https://github.com/LPGhatguy/rojo) instead (with a [VSCode extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo) I wrote for it, just search for `Rojo` in the extensions tab).
+
+RbxSync is being retired because I believe that Rojo is a better solution to the problem I was trying to solve when I created RbxSync, and I want to give more time to my other projects. Rojo receives more frequent updates and is maintained by a (at the time of this writing) Roblox employee (as a personal project).
+
+If you are switching, you should know that Rojo is not a drop-in replacement for RbxSync. There are some differences, notably:
+
+- At the time of writing, Rojo only supports filesystem-to-Studio syncing, so you need to create all of your scripts on your computer before syncing them in to Studio. However, in a future version of Rojo, bidirectional syncing will be possible.
+- Rojo is a bit harder to use for non-power users (there is no graphical interface), comparatively, but the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=evaera.vscode-rojo) makes it a lot easier.
+- Rojo uses different naming schemes to represent scripts on the filesystem:
+
+| Instance | RbxSync | Rojo
+| ------- | ------- | ----
+| **LocalScript** | Script.local.lua | [Script.client.lua](https://lpghatguy.github.io/rojo/sync-details/#scripts)
+| **Script** | Script.lua | [Script.server.lua](https://lpghatguy.github.io/rojo/sync-details/#scripts)
+| **ModuleScript** | Script.module.lua | [Script.lua](https://lpghatguy.github.io/rojo/sync-details/#scripts)
+| **Other instances** | Not Supported | [SomeName.json](https://lpghatguy.github.io/rojo/sync-details/#models)
+
+- Rojo uses a different way to represent nested scripts.
+  - RbxSync: The script exists on the top-level, and a folder of the same name indicates what goes inside:
+    - Script.module.lua
+    - Script/
+      - Child script.module.lua
+  - Rojo: Only the folder exists on the top level. If a file has the name "init.lua" (or .client.lua/.server/lua) inside that folder, then a script with the name of the folder will be created with the contents of "init.lua", and the other files inside the folder will be created as a child of that Script object:
+    - Script/
+      - init.lua
+      - Child script.lua
+- Rojo uses partition-based syncing, rather than syncing the entire game like RbxSync does. This means that you can create many folders on your computer that can then be mounted in your Roblox game as children of specific objects.
+- Rojo uses desctructive syncing, while RbxSync will ignore any objects it doesn't manage. This means that if something exists inside one of your partition mount points, it will be destroyed if it doesn't line up with what you have on disk.
+  - This means that you may have trouble migrating if you have lots of nested instances (Scripts with non-script children). You may need to restructure your project to lift all objects or prefabs out from under any scripts in a partition if this is the case for you.
+  - Any CollectionService tags on synced scripts or objects will be removed upon a fresh sync.
+- Rojo *will support* bidirectional syncing.
+- Rojo *will support* multiple instances of Studio at once.
+- Rojo *will support* exporting to and reading from rbxmx files
+- Rojo *will support* ignoring configured files and instances
+- Rojo *will support* custom development assets via `rbxasset://`
+- Rojo *will support* [a whole lot more!](https://github.com/LPGhatguy/rojo/issues)
+
+If RbxSync has been useful to you, I'm confident that with a little tweaking to your workflow, Rojo will do a much better job in the long run. So long, RbxSync, it's been nice! 👋
+
+# RbxSync - Third party IDE support for Roblox Studio in one click
 [![Patreon](http://i.imgur.com/dujYlAK.png)](https://www.patreon.com/erynlynn)
 
-RbxSync is an open source ROBLOX plugin that easily integrates any third-party code editor or IDE, such as Sublime Text, Notepad++, VS Code, or Atom, into ROBLOX Studio. This is accomplished via a helper application which runs in the tray and acts as a middle man between your code editor of choice and ROBLOX Studio. 
+RbxSync is an open source Roblox plugin that easily integrates any third-party code editor or IDE, such as Sublime Text, Notepad++, VS Code, or Atom, into Roblox Studio. This is accomplished via a helper application which runs in the tray and acts as a middle man between your code editor of choice and Roblox Studio. 
 
 ![Tray example](https://i.imgur.com/lqhr2sx.png)
 ![Demo Gif](https://i.imgur.com/z9oeWaF.gif)
@@ -12,7 +52,7 @@ Available in the [releases section.](https://github.com/evaera/RbxSync/releases/
 **Notice**: The executable will most likely cause Windows to alert you with a fullscreen SmartScreen warning because this file is not commonly downloaded. To run anyway, click *More info* then click *Run anyway*. If you're wary, you can build the plugin from the source with the instructions below.
 
 ## Installation 
-RbxSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into ROBLOX Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the ROBLOX Studio Plugin directory, you will need to configure this before using RbxSync)
+RbxSync is designed with simplicity in mind: just download the executable and run it, and it will automatically install the plugin into Roblox Studio. Just let the application run in the tray while you're developing. (**Note**: If you have changed the Roblox Studio Plugin directory, you will need to configure this before using RbxSync)
 
 Files will open with your system default `.lua` editor.
 
